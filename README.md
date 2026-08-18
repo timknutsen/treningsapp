@@ -17,6 +17,10 @@ for å flytte dagens gjenstående øvelser til neste dag.
 Øvelsesbanken dekker bein, overkropp, kjerne og kondisjon. Finner du ikke
 øvelsen, legg den til som egen øvelse nederst i velgeren.
 
+Økter som glapp dukker opp som **etterslep** øverst på I dag-fanen, i inntil
+to uker bakover. Der kan de enten hentes inn i dagens økt eller strykes.
+Strøkne dager står fortsatt som ikke trent i loggen.
+
 Rekka teller fullførte økter etter hverandre. Hviledager bryter den ikke, og
 dagens økt teller først når den er huket av, så du taper ikke rekka på å trene
 om kvelden.

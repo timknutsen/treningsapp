@@ -232,6 +232,26 @@
     border:1.5px solid var(--line); font-size:13.5px; padding:11px;
   }
 
+  /* ---- Etterslep ---- */
+  .overdue{border-color:var(--skip);}
+  .overdue-head{
+    display:flex; align-items:baseline; gap:8px; margin-bottom:4px;
+  }
+  .overdue-head h3{font-size:16px; font-weight:800; margin:0; flex:1;}
+  .overdue-sub{font-size:13px; color:var(--text-dim); line-height:1.5; margin-bottom:6px;}
+  .overdue-row{padding:12px 0; border-bottom:1px solid var(--line);}
+  .overdue-row:last-of-type{border-bottom:none;}
+  .overdue-when{display:flex; align-items:baseline; gap:8px;}
+  .overdue-day{font-size:14.5px; font-weight:700; flex:1;}
+  .overdue-count{font-size:12.5px; color:var(--skip); font-weight:700;}
+  .overdue-btns{display:flex; gap:8px; margin-top:9px;}
+  .mini-btn{
+    font-size:13px; font-weight:700; padding:8px 13px; border-radius:9px;
+    background:transparent; border:1.5px solid var(--line); color:var(--text-dim);
+  }
+  .mini-btn.take{border-color:var(--accent); color:var(--accent);}
+  .overdue-more{font-size:12.5px; color:var(--text-dim); margin-top:12px; line-height:1.5;}
+
   /* ---- Logg ---- */
   .streak-banner{
     display:flex; align-items:center; gap:13px;
@@ -573,22 +593,83 @@
       const def = defaultForDate(nextDate);
       state.days[nextKey] = def || {weekday:null, label:null, items:[]};
     }
-    // baseId ligger fast gjennom gjentatte flyttinger, slik at id-en ikke
-    // vokser med ett "-from-"-ledd for hver dag ei økt blir utsatt.
-    const carried = unfinished.map(i=>{
+    state.days[nextKey].items = state.days[nextKey].items.concat(carryItems(unfinished, fromKey));
+    state.days[nextKey].pushedIn = true;
+
+    syncWindow(state);
+    queuePersist();
+    render();
+  }
+
+  // baseId ligger fast gjennom gjentatte flyttinger, så id-en vokser ikke for
+  // hver dag ei økt blir utsatt. Kildedatoen i suffikset holder øvelser fra
+  // ulike dager fra hverandre når flere havner på samme dag.
+  function carryItems(items, fromKey){
+    return items.map(i=>{
       const baseId = i.baseId || i.id;
       return {
         ...i,
         baseId,
+        round: null,          // flyttede øvelser vises for seg, ikke i dagens runder
         origin: i.origin || fromKey,
         pushedFrom: fromKey,
-        id: baseId+"-from-"+nextKey
+        id: baseId+"-from-"+fromKey
       };
     });
-    state.days[nextKey].items = state.days[nextKey].items.concat(carried);
-    state.days[nextKey].pushedIn = true;
+  }
 
-    syncWindow(state);
+  /* ---------- Etterslep ---------- */
+
+  const ETTERSLEP_DAGER = 14;
+
+  // Dager som ligger bak i tid med øvelser som aldri ble gjort, og som ikke er
+  // strøket. Nyeste først.
+  function finnEtterslep(){
+    const today = startOfDay(new Date());
+    const res = [];
+    for(let i=1; i<=ETTERSLEP_DAGER; i++){
+      const d   = addDays(today,-i);
+      const key = dateKey(d);
+      const day = state.days[key];
+      if(!day || day.avskrevet) continue;
+      const igjen = day.items.filter(it=>!it.done);
+      if(igjen.length) res.push({key, date:d, day, igjen});
+    }
+    return res;
+  }
+
+  function taEtterslep(fromKey){
+    const source = state.days[fromKey];
+    if(!source) return;
+    const igjen = source.items.filter(i=>!i.done);
+    if(!igjen.length) return;
+
+    const today = startOfDay(new Date());
+    const tKey  = dateKey(today);
+    source.items = source.items.filter(i=>i.done);
+    source.skipped = true;
+
+    if(!state.days[tKey]){
+      const def = defaultForDate(today);
+      state.days[tKey] = def || {weekday:null, label:null, items:[]};
+    }
+    state.days[tKey].items = state.days[tKey].items.concat(carryItems(igjen, fromKey));
+    state.days[tKey].pushedIn = true;
+    queuePersist();
+    render();
+  }
+
+  // Strøket: øvelsene blir stående uavhuket, så dagen er fortsatt rød i loggen.
+  function strykEtterslep(fromKey){
+    const day = state.days[fromKey];
+    if(!day) return;
+    day.avskrevet = true;
+    queuePersist();
+    render();
+  }
+
+  function strykAltEtterslep(){
+    finnEtterslep().forEach(e=>{ state.days[e.key].avskrevet = true; });
     queuePersist();
     render();
   }
@@ -862,22 +943,26 @@
     }
 
     const allDone = day.items.every(i=>i.done);
-    const rounds  = [];
-    day.items.forEach(i=>{ if(i.round && rounds.indexOf(i.round)===-1) rounds.push(i.round); });
+    const egne    = day.items.filter(i=>!i.pushedFrom);
+    const flyttet = day.items.filter(i=>i.pushedFrom);
+
+    const rounds = [];
+    egne.forEach(i=>{ if(i.round && rounds.indexOf(i.round)===-1) rounds.push(i.round); });
     rounds.sort((a,b)=>a-b);
 
     if(rounds.length){
       rounds.forEach(r=>{
         card.appendChild(el("div", {class:"round-label"}, [text("Runde "+r)]));
-        day.items.filter(i=>i.round===r).forEach(i=>card.appendChild(renderItemRow(key,i)));
+        egne.filter(i=>i.round===r).forEach(i=>card.appendChild(renderItemRow(key,i)));
       });
-      const extra = day.items.filter(i=>!i.round);
-      if(extra.length){
-        card.appendChild(el("div", {class:"round-label"}, [text("Flyttet inn")]));
-        extra.forEach(i=>card.appendChild(renderItemRow(key,i)));
-      }
+      egne.filter(i=>!i.round).forEach(i=>card.appendChild(renderItemRow(key,i)));
     }else{
-      day.items.forEach(i=>card.appendChild(renderItemRow(key,i)));
+      egne.forEach(i=>card.appendChild(renderItemRow(key,i)));
+    }
+
+    if(flyttet.length){
+      card.appendChild(el("div", {class:"round-label"}, [text("Flyttet inn")]));
+      flyttet.forEach(i=>card.appendChild(renderItemRow(key,i)));
     }
 
     if(allDone){
@@ -887,6 +972,57 @@
       btnRow.appendChild(el("button", {class:"btn-skip",    onclick:()=>pushUnfinished(key)}, [text("Fikk ikke trent i dag")]));
       btnRow.appendChild(el("button", {class:"btn-primary", onclick:()=>markAllDone(key)},    [text("Merk alt fullført")]));
       card.appendChild(btnRow);
+    }
+    return card;
+  }
+
+  function renderEtterslep(){
+    const liste = finnEtterslep();
+    if(!liste.length) return null;
+
+    const vis  = liste.slice(0,3);
+    const rest = liste.length - vis.length;
+    const card = el("div", {class:"card overdue"});
+
+    const head = el("div", {class:"overdue-head"});
+    head.appendChild(el("h3", {}, [text("Etterslep")]));
+    card.appendChild(head);
+    card.appendChild(el("div", {class:"overdue-sub"}, [text(
+      liste.length === 1
+        ? "Du har ei økt som ikke ble gjort."
+        : "Du har " + liste.length + " økter som ikke ble gjort."
+    )]));
+
+    vis.forEach(e=>{
+      const row = el("div", {class:"overdue-row"});
+      const when = el("div", {class:"overdue-when"});
+      when.appendChild(el("div", {class:"overdue-day"},
+        [text(DAY_NAMES[e.date.getDay()]+" "+fmtShort(e.date)+
+              (e.day.label ? " · "+e.day.label.toLowerCase() : ""))]));
+      when.appendChild(el("div", {class:"overdue-count"},
+        [text(exerciseCount(e.igjen.length)+" igjen")]));
+      row.appendChild(when);
+
+      const btns = el("div", {class:"overdue-btns"});
+      btns.appendChild(el("button", {class:"mini-btn take",
+        onclick:()=>taEtterslep(e.key)}, [text("Ta den i dag")]));
+      btns.appendChild(el("button", {class:"mini-btn",
+        onclick:()=>strykEtterslep(e.key)}, [text("Stryk")]));
+      row.appendChild(btns);
+      card.appendChild(row);
+    });
+
+    if(rest > 0){
+      card.appendChild(el("div", {class:"overdue-more"}, [text(
+        "+ " + rest + (rest===1 ? " eldre økt" : " eldre økter") + " lenger bak."
+      )]));
+    }
+    if(liste.length > 1){
+      const alle = el("div", {class:"overdue-btns"});
+      alle.appendChild(el("button", {class:"mini-btn", style:"flex:1",
+        onclick:()=>{ if(confirm("Stryke alt etterslep? Dagene blir stående som ikke trent i loggen.")) strykAltEtterslep(); }},
+        [text("Stryk alt")]));
+      card.appendChild(alle);
     }
     return card;
   }
@@ -1185,7 +1321,8 @@
     const today    = startOfDay(new Date());
     const todayDay = state.days[dateKey(today)];
     const harNoeIDag  = !!(todayDay && todayDay.items.length);
-    const visVelkomst = view==="today" && isPlanEmpty() && !harNoeIDag;
+    const etterslep   = view==="today" ? renderEtterslep() : null;
+    const visVelkomst = view==="today" && isPlanEmpty() && !harNoeIDag && !etterslep;
 
     app.appendChild(el("div", {class:"eyebrow"}, [text("Din treningsplan")]));
     const titler = {today: DAY_NAMES[today.getDay()]+"s økt", plan: "Plan", log: "Logg"};
@@ -1202,6 +1339,7 @@
     }else if(view==="today"){
       const streak = renderStreak();
       if(streak) app.appendChild(streak);
+      if(etterslep) app.appendChild(etterslep);
       app.appendChild(renderTodayCard());
       app.appendChild(renderUpcoming());
       const planned = WEEK_ORDER.filter(wd=>plan.days[wd]).map(wd=>{
