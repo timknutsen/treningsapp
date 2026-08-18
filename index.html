@@ -40,9 +40,20 @@
     color:var(--text-dim); font-weight:600; margin-bottom:4px;
   }
   h1{
-    font-size:28px; font-weight:800; letter-spacing:-0.02em; margin:0 0 22px;
+    font-size:28px; font-weight:800; letter-spacing:-0.02em; margin:0 0 18px;
     font-variant-numeric: tabular-nums;
   }
+
+  .tabs{
+    display:flex; gap:4px; background:var(--bg-raised); border:1px solid var(--line);
+    border-radius:11px; padding:4px; margin-bottom:20px;
+  }
+  .tab{
+    flex:1; text-align:center; padding:9px 8px; border-radius:8px;
+    font-size:14px; font-weight:700; color:var(--text-dim); cursor:pointer;
+    transition: all .15s ease;
+  }
+  .tab.active{background:var(--accent); color:#1c1608;}
 
   .card{
     background:var(--bg-raised);
@@ -138,25 +149,133 @@
   .footer-note{
     text-align:center; color:var(--text-dim); font-size:12px; margin-top:30px; line-height:1.6;
   }
-  .footer-note a{color:var(--accent); text-decoration:none;}
 
   .loading{padding:60px 0; text-align:center; color:var(--text-dim); font-size:14px;}
 
-  .install-hint{
-    background:var(--bg-raised); border:1px dashed var(--line); border-radius:var(--radius);
-    padding:14px 16px; font-size:13px; color:var(--text-dim); line-height:1.5; margin-bottom:16px;
+  /* ---- Planlegger ---- */
+  .plan-day{padding:16px 18px;}
+  .plan-day.rest{opacity:.62;}
+  .plan-head{display:flex; align-items:center; gap:10px; margin-bottom:2px;}
+  .plan-weekday{font-size:16px; font-weight:800; flex:1;}
+  .plan-meta{font-size:12.5px; color:var(--text-dim); font-weight:600;}
+
+  .plan-name-input{
+    background:transparent; border:none; border-bottom:1px dashed var(--line);
+    color:var(--text); font-family:inherit; font-size:13.5px; font-weight:700;
+    padding:3px 0; width:100%; margin-bottom:10px; outline:none;
   }
-  .install-hint b{color:var(--text);}
+  .plan-name-input:focus{border-bottom-color:var(--accent);}
+  .plan-name-input::placeholder{color:var(--text-dim); font-weight:600;}
+
+  .plan-row{
+    display:flex; align-items:center; gap:10px;
+    padding:9px 0; border-bottom:1px solid var(--line);
+  }
+  .plan-row:last-of-type{border-bottom:none;}
+  .plan-row-name{font-size:14.5px; font-weight:600; flex:1; min-width:0;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .amount-input{
+    background:var(--bg); border:1px solid var(--line); border-radius:7px;
+    color:var(--text-dim); font-family:inherit; font-size:13px; font-weight:600;
+    padding:5px 8px; width:74px; text-align:right; outline:none;
+    font-variant-numeric:tabular-nums;
+  }
+  .amount-input:focus{border-color:var(--accent); color:var(--text);}
+  .icon-btn{
+    background:transparent; border:none; color:var(--text-dim);
+    font-size:19px; line-height:1; padding:4px 6px; cursor:pointer; font-weight:400;
+  }
+  .icon-btn:hover{color:var(--skip);}
+
+  .rounds-row{
+    display:flex; align-items:center; gap:10px; margin-top:14px;
+    padding-top:14px; border-top:1px solid var(--line);
+  }
+  .rounds-label{font-size:13px; color:var(--text-dim); font-weight:700; flex:1;}
+  .stepper{display:flex; align-items:center; gap:2px;
+    background:var(--bg); border:1px solid var(--line); border-radius:9px; padding:2px;}
+  .stepper button{
+    background:transparent; color:var(--text); padding:4px 11px;
+    font-size:17px; font-weight:700; border-radius:7px; line-height:1.2;
+  }
+  .stepper button:disabled{color:var(--line);}
+  .stepper .val{font-size:14px; font-weight:800; min-width:20px; text-align:center;
+    font-variant-numeric:tabular-nums;}
+
+  .add-btn{
+    width:100%; margin-top:12px; background:transparent; color:var(--accent);
+    border:1.5px dashed var(--accent-dim); padding:10px; font-size:13.5px;
+  }
+  .plan-actions{display:flex; gap:10px; margin-top:6px;}
+  .btn-ghost{
+    flex:1; background:transparent; color:var(--text-dim);
+    border:1.5px solid var(--line); font-size:13.5px; padding:11px;
+  }
+
+  /* ---- Øvelsesvelger ---- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(8,9,11,.72);
+    display:flex; align-items:flex-end; justify-content:center; z-index:50;
+    backdrop-filter: blur(3px);
+  }
+  .sheet{
+    background:var(--bg-raised); border:1px solid var(--line);
+    border-radius:18px 18px 0 0; width:100%; max-width:480px;
+    max-height:86vh; max-height:86dvh; display:flex; flex-direction:column;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .sheet-head{
+    padding:18px 18px 12px; border-bottom:1px solid var(--line); flex-shrink:0;
+  }
+  .sheet-title{display:flex; align-items:center; gap:10px; margin-bottom:12px;}
+  .sheet-title h2{font-size:17px; font-weight:800; margin:0; flex:1;}
+  .search{
+    width:100%; background:var(--bg); border:1px solid var(--line); border-radius:10px;
+    color:var(--text); font-family:inherit; font-size:15px; padding:11px 13px; outline:none;
+  }
+  .search:focus{border-color:var(--accent);}
+  .search::placeholder{color:var(--text-dim);}
+  .sheet-body{overflow-y:auto; padding:6px 18px 18px; -webkit-overflow-scrolling:touch;}
+  .group-title{
+    font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:16px 0 4px;
+  }
+  .bank-row{
+    display:flex; align-items:center; gap:12px; padding:11px 0;
+    border-bottom:1px solid var(--line); cursor:pointer;
+  }
+  .bank-row:last-child{border-bottom:none;}
+  .bank-name{font-size:14.5px; font-weight:600; flex:1;}
+  .bank-amount{font-size:13px; color:var(--text-dim); font-weight:600;
+    font-variant-numeric:tabular-nums;}
+  .bank-plus{color:var(--accent); font-size:18px; font-weight:700; line-height:1;}
+  .bank-empty{color:var(--text-dim); font-size:14px; padding:22px 0; text-align:center;}
+
+  .custom-box{
+    border-top:1px solid var(--line); margin-top:16px; padding-top:16px;
+  }
+  .custom-fields{display:flex; gap:8px; margin-top:10px;}
+  .custom-fields input{
+    background:var(--bg); border:1px solid var(--line); border-radius:9px;
+    color:var(--text); font-family:inherit; font-size:14px; padding:10px 11px;
+    outline:none; min-width:0;
+  }
+  .custom-fields input:focus{border-color:var(--accent);}
+  .custom-fields input::placeholder{color:var(--text-dim);}
+  .custom-fields .f-name{flex:1;}
+  .custom-fields .f-amount{width:90px;}
+  .custom-fields button{background:var(--accent); color:#1c1608; padding:10px 15px; font-size:14px;}
 </style>
 </head>
 <body>
 <div class="wrap" id="app">
   <div class="loading">Laster økt...</div>
 </div>
-
 <script>
 (function(){
-  const DAY_NAMES = ["Søndag","Mandag","Tirsdag","Onsdag","Torsdag","Fredag","Lørdag"];
+  const DAY_NAMES  = ["Søndag","Mandag","Tirsdag","Onsdag","Torsdag","Fredag","Lørdag"];
+  const DAY_SHORT  = ["Søn","Man","Tir","Ons","Tor","Fre","Lør"];
+  const WEEK_ORDER = [1,2,3,4,5,6,0];
   const MONTH_NAMES = ["jan","feb","mar","apr","mai","jun","jul","aug","sep","okt","nov","des"];
 
   function pad(n){return n<10?"0"+n:""+n;}
@@ -165,64 +284,179 @@
   function startOfDay(d){const r=new Date(d); r.setHours(0,0,0,0); return r;}
   function fmtShort(d){return d.getDate()+". "+MONTH_NAMES[d.getMonth()];}
 
-  const SAT_EXERCISES = [
-    {name:"Spensthopp", amount:"20 stk"},
-    {name:"Utfall m/ 3 kg vekter", amount:"30 stk"},
-    {name:"Pushups", amount:"12 stk"},
-    {name:"Hang ups", amount:"5 stk"},
-    {name:"Leg raise", amount:"15 stk"},
-    {name:"90 grader hold", amount:"90 sek"},
-    {name:"Planke", amount:"60 sek"},
-    {name:"Ryggenhev", amount:"40 sek"}
-  ];
+  /* ---------- Øvelsesbank ---------- */
 
-  function buildSaturdayItems(){
+  const GROUPS = ["Bein","Overkropp","Kjerne","Kondisjon"];
+  const EXERCISE_BANK = [
+    {id:"spensthopp",   name:"Spensthopp",           amount:"20 stk",     group:"Bein"},
+    {id:"utfall",       name:"Utfall m/ 3 kg vekter",amount:"30 stk",     group:"Bein"},
+    {id:"knebøy",       name:"Knebøy",               amount:"20 stk",     group:"Bein"},
+    {id:"bulgarsk",     name:"Bulgarsk utfall",      amount:"12 stk",     group:"Bein"},
+    {id:"tåhev",        name:"Tåhev",                amount:"25 stk",     group:"Bein"},
+    {id:"bokshopp",     name:"Bokshopp",             amount:"15 stk",     group:"Bein"},
+
+    {id:"pushups",      name:"Pushups",              amount:"12 stk",     group:"Overkropp"},
+    {id:"hangups",      name:"Hang ups",             amount:"5 stk",      group:"Overkropp"},
+    {id:"chinups",      name:"Chinups",              amount:"5 stk",      group:"Overkropp"},
+    {id:"dips",         name:"Dips",                 amount:"10 stk",     group:"Overkropp"},
+    {id:"skulderpress", name:"Skulderpress",         amount:"12 stk",     group:"Overkropp"},
+    {id:"roing_strikk", name:"Roing m/ strikk",      amount:"15 stk",     group:"Overkropp"},
+
+    {id:"legraise",     name:"Leg raise",            amount:"15 stk",     group:"Kjerne"},
+    {id:"hold90",       name:"90 grader hold",       amount:"90 sek",     group:"Kjerne"},
+    {id:"planke",       name:"Planke",               amount:"60 sek",     group:"Kjerne"},
+    {id:"sideplanke",   name:"Sideplanke",           amount:"40 sek",     group:"Kjerne"},
+    {id:"ryggenhev",    name:"Ryggenhev",            amount:"40 sek",     group:"Kjerne"},
+    {id:"russiantwist", name:"Russian twist",        amount:"30 stk",     group:"Kjerne"},
+    {id:"situps",       name:"Sit-ups",              amount:"20 stk",     group:"Kjerne"},
+    {id:"mountain",     name:"Mountain climbers",    amount:"40 stk",     group:"Kjerne"},
+
+    {id:"loping",       name:"Løping",               amount:"4 km",       group:"Kondisjon"},
+    {id:"intervaller",  name:"Intervaller",          amount:"6 × 400 m",  group:"Kondisjon"},
+    {id:"joggetur",     name:"Rolig jogg",           amount:"30 min",     group:"Kondisjon"},
+    {id:"sykling",      name:"Sykling",              amount:"20 km",      group:"Kondisjon"},
+    {id:"hopptau",      name:"Hopptau",              amount:"5 min",      group:"Kondisjon"},
+    {id:"romaskin",     name:"Roing",                amount:"2000 m",     group:"Kondisjon"}
+  ];
+  const BANK_BY_ID = {};
+  EXERCISE_BANK.forEach(e=>{ BANK_BY_ID[e.id] = e; });
+
+  // Egne øvelser har exId null og bærer navnet sitt direkte.
+  function exerciseCount(n){
+    return n+" "+(n===1 ? "øvelse" : "øvelser");
+  }
+
+  function exName(ex){
+    if(ex.name) return ex.name;
+    const b = BANK_BY_ID[ex.exId];
+    return b ? b.name : "Øvelse";
+  }
+
+  /* ---------- Lagring ---------- */
+
+  const PLAN_KEY    = "workout-plan-v1";
+  const STORAGE_KEY = "workout-schedule-v1";
+  const WINDOW_DAYS = 60;
+  const MAX_ROUNDS  = 6;
+
+  let plan  = null;  // { days: { <ukedag 0-6>: {label, rounds, exercises:[{exId,name,amount}]} } }
+  let state = null;  // { days: { "yyyy-mm-dd": {weekday,label,items,pushedIn,skipped} } }
+  let view  = "today";
+  let saveTimer = null;
+
+  // Standardplanen speiler den opprinnelige hardkodede planen, slik at
+  // eksisterende brukere ikke merker noe før de selv endrer noe.
+  function defaultPlan(){
+    return {
+      days: {
+        6: {label:"Styrke", rounds:2, exercises:[
+          {exId:"spensthopp",   amount:"20 stk"},
+          {exId:"utfall",       amount:"30 stk"},
+          {exId:"pushups",      amount:"12 stk"},
+          {exId:"hangups",      amount:"5 stk"},
+          {exId:"legraise",     amount:"15 stk"},
+          {exId:"hold90",       amount:"90 sek"},
+          {exId:"planke",       amount:"60 sek"},
+          {exId:"ryggenhev",    amount:"40 sek"}
+        ]},
+        0: {label:"Løping", rounds:1, exercises:[
+          {exId:"loping", amount:"4 km"}
+        ]}
+      }
+    };
+  }
+
+  function loadPlan(){
+    let p = null;
+    try{
+      const raw = localStorage.getItem(PLAN_KEY);
+      if(raw) p = JSON.parse(raw);
+    }catch(e){ p = null; }
+    if(!p || !p.days) p = defaultPlan();
+    for(let wd=0; wd<7; wd++){
+      const d = p.days[wd];
+      if(!d) continue;
+      if(!Array.isArray(d.exercises) || d.exercises.length===0){ delete p.days[wd]; continue; }
+      d.rounds = Math.min(MAX_ROUNDS, Math.max(1, parseInt(d.rounds,10) || 1));
+    }
+    return p;
+  }
+
+  function persistPlan(){
+    try{ localStorage.setItem(PLAN_KEY, JSON.stringify(plan)); }
+    catch(e){ console.error("Kunne ikke lagre planen:", e); }
+  }
+
+  function persist(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch(e){ console.error("Kunne ikke lagre lokalt:", e); }
+  }
+
+  function queuePersist(){
+    if(saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(persist, 150);
+  }
+
+  /* ---------- Bygge dager fra planen ---------- */
+
+  function defaultForDate(date){
+    const wd   = date.getDay();
+    const spec = plan.days[wd];
+    if(!spec || !spec.exercises.length) return null;
     const items = [];
-    for(let round=1; round<=2; round++){
-      SAT_EXERCISES.forEach((ex,i)=>{
+    for(let round=1; round<=spec.rounds; round++){
+      spec.exercises.forEach((ex,i)=>{
         items.push({
-          id: "sat-r"+round+"-"+i,
-          name: ex.name,
+          id: "d"+wd+"-r"+round+"-"+i,
+          name: exName(ex),
           amount: ex.amount,
-          round: round,
+          round: spec.rounds>1 ? round : null,
           done: false
         });
       });
     }
-    return items;
+    return {
+      weekday: DAY_NAMES[wd].toLowerCase(),
+      label: spec.label || "Økt",
+      items: items
+    };
   }
 
-  function buildSundayItems(){
-    return [{id:"run", name:"Løping", amount:"4 km", round:null, done:false}];
+  // En dag er urørt så lenge ingenting er huket av, ingenting er flyttet inn
+  // og den ikke er hoppet over. Bare urørte dager bygges om når planen endres,
+  // slik at framgang og flyttede øvelser aldri overskrives.
+  function isUntouched(day){
+    if(!day) return true;
+    if(day.pushedIn || day.skipped) return false;
+    return !day.items.some(i => i.done || i.pushedFrom);
   }
 
-  function defaultForDate(date){
-    const wd = date.getDay();
-    if(wd===6) return {weekday:"lørdag", items: buildSaturdayItems()};
-    if(wd===0) return {weekday:"søndag", items: buildSundayItems()};
-    return null;
-  }
-
-  const WINDOW_DAYS = 60;
-  const STORAGE_KEY = "workout-schedule-v1";
-
-  let state = null; // { days: { "yyyy-mm-dd": {weekday, items:[...], pushedIn:bool, skipped:bool} } }
-  let saveTimer = null;
-
-  function ensureWindow(st){
+  function syncWindow(st){
     const today = startOfDay(new Date());
     for(let i=0;i<WINDOW_DAYS;i++){
-      const d = addDays(today,i);
+      const d   = addDays(today,i);
       const key = dateKey(d);
-      if(!st.days[key]){
-        const def = defaultForDate(d);
+      const existing = st.days[key];
+      const def = defaultForDate(d);
+      if(!existing){
         if(def) st.days[key] = def;
+      }else if(isUntouched(existing)){
+        if(def) st.days[key] = def;
+        else delete st.days[key];
       }
     }
     return st;
   }
 
+  function planChanged(){
+    persistPlan();
+    syncWindow(state);
+    queuePersist();
+    render();
+  }
+
   async function load(){
+    plan = loadPlan();
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
       if(raw) state = JSON.parse(raw);
@@ -230,23 +464,13 @@
       state = null;
     }
     if(!state || !state.days) state = {days:{}};
-    ensureWindow(state);
-    await persist();
+    syncWindow(state);
+    persistPlan();
+    persist();
     render();
   }
 
-  async function persist(){
-    try{
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }catch(e){
-      console.error("Kunne ikke lagre lokalt:", e);
-    }
-  }
-
-  function queuePersist(){
-    if(saveTimer) clearTimeout(saveTimer);
-    saveTimer = setTimeout(persist, 150);
-  }
+  /* ---------- Handlinger på dagens økt ---------- */
 
   function toggleItem(dayKey, itemId){
     const day = state.days[dayKey];
@@ -271,7 +495,7 @@
     const nextKey = dateKey(nextDate);
     if(!state.days[nextKey]){
       const def = defaultForDate(nextDate);
-      state.days[nextKey] = def || {weekday:null, items:[]};
+      state.days[nextKey] = def || {weekday:null, label:null, items:[]};
     }
     // baseId ligger fast gjennom gjentatte flyttinger, slik at id-en ikke
     // vokser med ett "-from-"-ledd for hver dag ei økt blir utsatt.
@@ -288,7 +512,7 @@
     state.days[nextKey].items = state.days[nextKey].items.concat(carried);
     state.days[nextKey].pushedIn = true;
 
-    ensureWindow(state);
+    syncWindow(state);
     queuePersist();
     render();
   }
@@ -300,6 +524,68 @@
     queuePersist();
     render();
   }
+
+  /* ---------- Handlinger på planen ---------- */
+
+  function planDay(wd){
+    if(!plan.days[wd]) plan.days[wd] = {label:"", rounds:1, exercises:[]};
+    return plan.days[wd];
+  }
+
+  function addExercise(wd, entry){
+    const day = planDay(wd);
+    day.exercises.push(entry);
+    if(!day.label) day.label = "Økt";
+    planChanged();
+  }
+
+  function removeExercise(wd, idx){
+    const day = plan.days[wd];
+    if(!day) return;
+    day.exercises.splice(idx,1);
+    if(day.exercises.length===0) delete plan.days[wd];
+    planChanged();
+  }
+
+  function setAmount(wd, idx, value){
+    const day = plan.days[wd];
+    if(!day || !day.exercises[idx]) return;
+    const v = (value||"").trim();
+    if(!v || v === day.exercises[idx].amount) return;
+    day.exercises[idx].amount = v;
+    planChanged();
+  }
+
+  function setLabel(wd, value){
+    const day = plan.days[wd];
+    if(!day) return;
+    const v = (value||"").trim();
+    if(v === (day.label||"")) return;
+    day.label = v || "Økt";
+    planChanged();
+  }
+
+  function setRounds(wd, n){
+    const day = plan.days[wd];
+    if(!day) return;
+    const v = Math.min(MAX_ROUNDS, Math.max(1, n));
+    if(v === day.rounds) return;
+    day.rounds = v;
+    planChanged();
+  }
+
+  function clearDay(wd){
+    if(!plan.days[wd]) return;
+    delete plan.days[wd];
+    planChanged();
+  }
+
+  function resetPlan(){
+    plan = defaultPlan();
+    planChanged();
+  }
+
+  /* ---------- DOM-hjelpere ---------- */
 
   function el(tag, attrs, children){
     const e = document.createElement(tag);
@@ -314,30 +600,114 @@
   }
   function text(t){ return document.createTextNode(t); }
 
+  /* ---------- Øvelsesvelger ---------- */
+
+  // Velgeren bygger og rydder sitt eget DOM-tre utenfor render(), slik at
+  // søkefeltet beholder fokus mens man skriver.
+  function openPicker(wd){
+    const chosen = new Set((plan.days[wd] ? plan.days[wd].exercises : []).map(e=>e.exId).filter(Boolean));
+
+    const overlay = el("div", {class:"overlay"});
+    const sheet   = el("div", {class:"sheet", onclick:(e)=>e.stopPropagation()});
+    const list    = el("div", {class:"sheet-body"});
+
+    function close(){ overlay.remove(); document.removeEventListener("keydown", onKey); }
+    function onKey(e){ if(e.key==="Escape") close(); }
+    overlay.addEventListener("click", close);
+    document.addEventListener("keydown", onKey);
+
+    function pick(ex){
+      close();
+      addExercise(wd, {exId: ex.id, amount: ex.amount});
+    }
+
+    function drawList(query){
+      list.innerHTML = "";
+      const q = (query||"").trim().toLowerCase();
+      let hits = 0;
+      GROUPS.forEach(group=>{
+        const inGroup = EXERCISE_BANK.filter(ex =>
+          ex.group===group && !chosen.has(ex.id) && (!q || ex.name.toLowerCase().includes(q))
+        );
+        if(!inGroup.length) return;
+        hits += inGroup.length;
+        list.appendChild(el("div", {class:"group-title"}, [text(group)]));
+        inGroup.forEach(ex=>{
+          list.appendChild(el("div", {class:"bank-row", onclick:()=>pick(ex)}, [
+            el("div", {class:"bank-name"},   [text(ex.name)]),
+            el("div", {class:"bank-amount"}, [text(ex.amount)]),
+            el("div", {class:"bank-plus"},   [text("+")])
+          ]));
+        });
+      });
+      if(hits===0){
+        list.appendChild(el("div", {class:"bank-empty"}, [text(
+          q ? "Ingen treff. Legg den til som egen øvelse under." : "Alle øvelsene i banken er allerede lagt til."
+        )]));
+      }
+
+      // Egen øvelse, for det banken ikke dekker.
+      const box    = el("div", {class:"custom-box"});
+      box.appendChild(el("div", {class:"group-title"}, [text("Egen øvelse")]));
+      const fields = el("div", {class:"custom-fields"});
+      const fName  = el("input", {class:"f-name",   type:"text", placeholder:"Navn", value: q ? query.trim() : ""});
+      const fAmt   = el("input", {class:"f-amount", type:"text", placeholder:"20 stk"});
+      function addCustom(){
+        const n = fName.value.trim();
+        if(!n){ fName.focus(); return; }
+        close();
+        addExercise(wd, {exId:null, name:n, amount: fAmt.value.trim() || "1 sett"});
+      }
+      fName.addEventListener("keydown", e=>{ if(e.key==="Enter") addCustom(); });
+      fAmt .addEventListener("keydown", e=>{ if(e.key==="Enter") addCustom(); });
+      fields.appendChild(fName);
+      fields.appendChild(fAmt);
+      fields.appendChild(el("button", {onclick:addCustom}, [text("Legg til")]));
+      box.appendChild(fields);
+      list.appendChild(box);
+    }
+
+    const head   = el("div", {class:"sheet-head"});
+    const titleRow = el("div", {class:"sheet-title"});
+    titleRow.appendChild(el("h2", {}, [text(DAY_NAMES[wd])]));
+    titleRow.appendChild(el("button", {class:"icon-btn", onclick:close}, [text("✕")]));
+    head.appendChild(titleRow);
+    const search = el("input", {class:"search", type:"text", placeholder:"Søk i øvelsesbanken..."});
+    search.addEventListener("input", ()=>drawList(search.value));
+    head.appendChild(search);
+
+    sheet.appendChild(head);
+    sheet.appendChild(list);
+    overlay.appendChild(sheet);
+    document.body.appendChild(overlay);
+    drawList("");
+  }
+
+  /* ---------- Visning: i dag ---------- */
+
   function renderItemRow(dayKey, item){
-    const row = el("div", {class:"item"+(item.done?" done":"")});
+    const row   = el("div", {class:"item"+(item.done?" done":"")});
     const check = el("div", {class:"check", onclick:()=>toggleItem(dayKey, item.id)}, [text(item.done?"✓":"")]);
-    const name = el("div", {class:"item-name", onclick:()=>toggleItem(dayKey, item.id)});
+    const name  = el("div", {class:"item-name", onclick:()=>toggleItem(dayKey, item.id)});
     name.appendChild(text(item.name));
     if(item.pushedFrom){
       name.appendChild(el("span", {class:"pushed-tag"}, [text("flyttet")]));
     }
-    const amount = el("div", {class:"item-amount"}, [text(item.amount)]);
     row.appendChild(check);
     row.appendChild(name);
-    row.appendChild(amount);
+    row.appendChild(el("div", {class:"item-amount"}, [text(item.amount)]));
     return row;
   }
 
   function renderTodayCard(){
     const today = startOfDay(new Date());
-    const key = dateKey(today);
-    const day = state.days[key];
+    const key   = dateKey(today);
+    const day   = state.days[key];
 
-    const card = el("div", {class:"card today-card"});
+    const card  = el("div", {class:"card today-card"});
     const label = el("div", {class:"today-label"});
     label.appendChild(el("div", {class:"today-weekday"}, [text(DAY_NAMES[today.getDay()])]));
-    label.appendChild(el("div", {class:"today-date"}, [text(fmtShort(today))]));
+    label.appendChild(el("div", {class:"today-date"},    [text(fmtShort(today))]));
     card.appendChild(label);
 
     if(!day || day.items.length===0){
@@ -350,85 +720,175 @@
     }
 
     const allDone = day.items.every(i=>i.done);
+    const rounds  = [];
+    day.items.forEach(i=>{ if(i.round && rounds.indexOf(i.round)===-1) rounds.push(i.round); });
+    rounds.sort((a,b)=>a-b);
 
-    if(day.weekday==="lørdag" || day.items.some(i=>i.round)){
-      let round1 = day.items.filter(i=>i.round===1);
-      let round2 = day.items.filter(i=>i.round===2);
-      let extra = day.items.filter(i=>!i.round);
-      if(round1.length){
-        card.appendChild(el("div", {class:"round-label"}, [text("Runde 1")]));
-        round1.forEach(i=>card.appendChild(renderItemRow(key,i)));
-      }
-      if(round2.length){
-        card.appendChild(el("div", {class:"round-label"}, [text("Runde 2")]));
-        round2.forEach(i=>card.appendChild(renderItemRow(key,i)));
-      }
+    if(rounds.length){
+      rounds.forEach(r=>{
+        card.appendChild(el("div", {class:"round-label"}, [text("Runde "+r)]));
+        day.items.filter(i=>i.round===r).forEach(i=>card.appendChild(renderItemRow(key,i)));
+      });
+      const extra = day.items.filter(i=>!i.round);
       if(extra.length){
         card.appendChild(el("div", {class:"round-label"}, [text("Flyttet inn")]));
         extra.forEach(i=>card.appendChild(renderItemRow(key,i)));
       }
-    } else {
+    }else{
       day.items.forEach(i=>card.appendChild(renderItemRow(key,i)));
     }
 
     if(allDone){
       card.appendChild(el("div", {class:"done-msg"}, [text("✓ Økta er fullført. Bra jobba.")]));
-    } else {
+    }else{
       const btnRow = el("div", {class:"btn-row"});
-      const skipBtn = el("button", {class:"btn-skip", onclick:()=>pushUnfinished(key)}, [text("Fikk ikke trent i dag")]);
-      const doneBtn = el("button", {class:"btn-primary", onclick:()=>markAllDone(key)}, [text("Merk alt fullført")]);
-      btnRow.appendChild(skipBtn);
-      btnRow.appendChild(doneBtn);
+      btnRow.appendChild(el("button", {class:"btn-skip",    onclick:()=>pushUnfinished(key)}, [text("Fikk ikke trent i dag")]));
+      btnRow.appendChild(el("button", {class:"btn-primary", onclick:()=>markAllDone(key)},    [text("Merk alt fullført")]));
       card.appendChild(btnRow);
     }
-
     return card;
   }
 
   function renderUpcoming(){
     const today = startOfDay(new Date());
-    const wrap = el("div");
+    const wrap  = el("div");
     wrap.appendChild(el("div", {class:"section-title"}, [text("Neste dager")]));
-    const rail = el("ul", {class:"rail"});
+    const rail  = el("ul", {class:"rail"});
 
     let shown = 0;
     for(let i=1; i<=21 && shown<6; i++){
-      const d = addDays(today,i);
+      const d   = addDays(today,i);
       const key = dateKey(d);
       const day = state.days[key];
       if(!day || day.items.length===0) continue;
       shown++;
       const li = el("li", {});
       li.appendChild(el("div", {class:"rail-dot"+(day.pushedIn?" active":"")}));
-      li.appendChild(el("div", {class:"rail-day"}, [text(DAY_NAMES[d.getDay()].slice(0,3)+" "+fmtShort(d))]));
-      const count = day.items.length;
-      const label = day.weekday==="lørdag" ? "styrkeøkt" : (day.weekday==="søndag" ? "løpetur" : "flyttet økt");
+      li.appendChild(el("div", {class:"rail-day"}, [text(DAY_SHORT[d.getDay()]+" "+fmtShort(d))]));
+      const label = day.label || "Økt";
       const itemsDiv = el("div", {class:"rail-items"});
-      itemsDiv.appendChild(el("b",{},[text(count+" øvelser")]));
-      itemsDiv.appendChild(text(" · "+label+(day.pushedIn?" (inkl. flyttet)":"")));
+      itemsDiv.appendChild(el("b",{},[text(exerciseCount(day.items.length))]));
+      itemsDiv.appendChild(text(" · "+label.toLowerCase()+(day.pushedIn?" (inkl. flyttet)":"")));
       li.appendChild(itemsDiv);
       rail.appendChild(li);
     }
     if(shown===0){
-      rail.appendChild(el("li",{},[el("div",{class:"rail-items"},[text("Ingenting planlagt de neste ukene.")])]));
+      rail.appendChild(el("li",{},[el("div",{class:"rail-items"},[text(
+        "Ingenting planlagt. Sett opp økter under \"Plan\"."
+      )])]));
     }
     wrap.appendChild(rail);
     return wrap;
   }
 
+  /* ---------- Visning: plan ---------- */
+
+  function renderPlanDay(wd){
+    const spec = plan.days[wd];
+    const has  = !!(spec && spec.exercises.length);
+    const card = el("div", {class:"card plan-day"+(has?"":" rest")});
+
+    const head = el("div", {class:"plan-head"});
+    head.appendChild(el("div", {class:"plan-weekday"}, [text(DAY_NAMES[wd])]));
+    head.appendChild(el("div", {class:"plan-meta"}, [text(
+      has ? exerciseCount(spec.exercises.length*spec.rounds) : "Hviledag"
+    )]));
+    card.appendChild(head);
+
+    if(has){
+      const nameInput = el("input", {
+        class:"plan-name-input", type:"text", placeholder:"Navn på økta",
+        value: spec.label || ""
+      });
+      nameInput.addEventListener("change", ()=>setLabel(wd, nameInput.value));
+      card.appendChild(nameInput);
+
+      spec.exercises.forEach((ex,idx)=>{
+        const row = el("div", {class:"plan-row"});
+        row.appendChild(el("div", {class:"plan-row-name"}, [text(exName(ex))]));
+        const amt = el("input", {class:"amount-input", type:"text", value: ex.amount});
+        amt.addEventListener("change", ()=>setAmount(wd, idx, amt.value));
+        row.appendChild(amt);
+        row.appendChild(el("button", {class:"icon-btn", title:"Fjern",
+          onclick:()=>removeExercise(wd, idx)}, [text("✕")]));
+        card.appendChild(row);
+      });
+
+      const rr = el("div", {class:"rounds-row"});
+      rr.appendChild(el("div", {class:"rounds-label"}, [text("Runder")]));
+      const stepper = el("div", {class:"stepper"});
+      const minus = el("button", {onclick:()=>setRounds(wd, spec.rounds-1)}, [text("−")]);
+      if(spec.rounds<=1) minus.disabled = true;
+      const plus  = el("button", {onclick:()=>setRounds(wd, spec.rounds+1)}, [text("+")]);
+      if(spec.rounds>=MAX_ROUNDS) plus.disabled = true;
+      stepper.appendChild(minus);
+      stepper.appendChild(el("div", {class:"val"}, [text(String(spec.rounds))]));
+      stepper.appendChild(plus);
+      rr.appendChild(stepper);
+      card.appendChild(rr);
+    }
+
+    card.appendChild(el("button", {class:"add-btn", onclick:()=>openPicker(wd)},
+      [text(has ? "+ Legg til øvelse" : "+ Legg til øvelse for "+DAY_NAMES[wd].toLowerCase())]));
+
+    if(has){
+      const actions = el("div", {class:"plan-actions"});
+      actions.appendChild(el("button", {class:"btn-ghost", onclick:()=>clearDay(wd)},
+        [text("Gjør til hviledag")]));
+      card.appendChild(actions);
+    }
+    return card;
+  }
+
+  function renderPlan(){
+    const wrap = el("div");
+    wrap.appendChild(el("div", {class:"section-title"}, [text("Din uke")]));
+    WEEK_ORDER.forEach(wd => wrap.appendChild(renderPlanDay(wd)));
+    const actions = el("div", {class:"plan-actions"});
+    actions.appendChild(el("button", {class:"btn-ghost", onclick:()=>{
+      if(confirm("Tilbakestille til standardplanen? Øktene du allerede har begynt på beholdes.")) resetPlan();
+    }}, [text("Tilbakestill planen")]));
+    wrap.appendChild(actions);
+    wrap.appendChild(el("div", {class:"footer-note"}, [text(
+      "Endringer slår inn på kommende dager med det samme. Dager du har huket av på, hoppet over eller flyttet øvelser til, blir stående."
+    )]));
+    return wrap;
+  }
+
+  /* ---------- Render ---------- */
+
+  function setView(v){ view = v; render(); }
+
   function render(){
     const app = document.getElementById("app");
     app.innerHTML = "";
 
+    const today = startOfDay(new Date());
     app.appendChild(el("div", {class:"eyebrow"}, [text("Din treningsplan")]));
-    app.appendChild(el("h1", {}, [text(DAY_NAMES[startOfDay(new Date()).getDay()]+"s økt")]));
-
-    app.appendChild(renderTodayCard());
-    app.appendChild(renderUpcoming());
-
-    app.appendChild(el("div", {class:"footer-note"}, [text(
-      "Lørdag: 2 runder styrke. Søndag: 4 km løping. Trykk \"Fikk ikke trent\" for å flytte økta til neste dag."
+    app.appendChild(el("h1", {}, [text(
+      view==="today" ? DAY_NAMES[today.getDay()]+"s økt" : "Plan"
     )]));
+
+    const tabs = el("div", {class:"tabs"});
+    tabs.appendChild(el("div", {class:"tab"+(view==="today"?" active":""), onclick:()=>setView("today")}, [text("I dag")]));
+    tabs.appendChild(el("div", {class:"tab"+(view==="plan" ?" active":""), onclick:()=>setView("plan")},  [text("Plan")]));
+    app.appendChild(tabs);
+
+    if(view==="today"){
+      app.appendChild(renderTodayCard());
+      app.appendChild(renderUpcoming());
+      const planned = WEEK_ORDER.filter(wd=>plan.days[wd]).map(wd=>{
+        const s = plan.days[wd];
+        return DAY_NAMES[wd].toLowerCase()+": "+(s.label||"økt").toLowerCase();
+      });
+      app.appendChild(el("div", {class:"footer-note"}, [text(
+        planned.length
+          ? planned.join(" · ")+". Trykk \"Fikk ikke trent\" for å flytte økta til neste dag."
+          : "Ingen økter satt opp ennå. Gå til \"Plan\" og bygg uka di."
+      )]));
+    }else{
+      app.appendChild(renderPlan());
+    }
   }
 
   load();
