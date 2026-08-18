@@ -232,6 +232,66 @@
     border:1.5px solid var(--line); font-size:13.5px; padding:11px;
   }
 
+  /* ---- Logg ---- */
+  .streak-banner{
+    display:flex; align-items:center; gap:13px;
+    background:var(--bg-raised); border:1px solid var(--accent-dim);
+    border-radius:var(--radius); padding:14px 16px; margin-bottom:16px;
+  }
+  .streak-flame{font-size:25px; line-height:1;}
+  .streak-text{flex:1; min-width:0;}
+  .streak-num{font-size:16.5px; font-weight:800;}
+  .streak-sub{font-size:12.5px; color:var(--text-dim); margin-top:2px; line-height:1.4;}
+
+  .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px;}
+  .stat{
+    background:var(--bg-raised); border:1px solid var(--line);
+    border-radius:12px; padding:14px 8px; text-align:center;
+  }
+  .stat-val{font-size:22px; font-weight:800; font-variant-numeric:tabular-nums;}
+  .stat-lab{font-size:10.5px; color:var(--text-dim); font-weight:700;
+    margin-top:3px; letter-spacing:.05em; text-transform:uppercase;}
+
+  .cal-nav{display:flex; align-items:center; gap:10px; margin-bottom:12px;}
+  .cal-month{flex:1; font-size:16px; font-weight:800; text-transform:capitalize;}
+  .cal-nav button{
+    background:var(--bg-raised); border:1px solid var(--line); color:var(--text);
+    padding:7px 14px; font-size:15px; border-radius:9px;
+  }
+  .cal-nav button:disabled{opacity:.28;}
+
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px;}
+  .cal-dow{text-align:center; font-size:10.5px; font-weight:700;
+    color:var(--text-dim); padding-bottom:2px;}
+  .cal-cell{
+    aspect-ratio:1; border-radius:9px; display:flex;
+    align-items:center; justify-content:center;
+    font-size:13px; font-weight:700; font-variant-numeric:tabular-nums;
+    border:1.5px solid transparent; color:var(--text-dim);
+    background:var(--bg-raised); cursor:pointer;
+  }
+  .cal-cell.tom{background:transparent; cursor:default;}
+  .cal-cell.hvile{cursor:default;}
+  .cal-cell.fullfort{background:var(--done); color:#0d1a14;}
+  .cal-cell.delvis{background:var(--accent); color:#1c1608;}
+  .cal-cell.ikke,
+  .cal-cell.hoppet{background:var(--skip); color:#1e0d0a;}
+  .cal-cell.planlagt{border-color:var(--accent-dim); color:var(--text);}
+  .cal-cell.idag,
+  .cal-cell.pagar{border-color:var(--accent); color:var(--text);}
+  .cal-cell.valgt{outline:2px solid var(--text); outline-offset:1px;}
+
+  .legend{display:flex; flex-wrap:wrap; gap:10px 14px; margin-top:16px;}
+  .legend span{display:flex; align-items:center; gap:6px;
+    font-size:11.5px; color:var(--text-dim); font-weight:600;}
+  .legend i{width:11px; height:11px; border-radius:3px; display:block; flex-shrink:0;}
+
+  .log-empty{
+    background:var(--bg-raised); border:1px dashed var(--line);
+    border-radius:var(--radius); padding:22px 18px; text-align:center;
+    color:var(--text-dim); font-size:14px; line-height:1.6;
+  }
+
   /* ---- Øvelsesvelger ---- */
   .overlay{
     position:fixed; inset:0; background:rgba(8,9,11,.72);
@@ -297,6 +357,8 @@
   const DAY_SHORT  = ["Søn","Man","Tir","Ons","Tor","Fre","Lør"];
   const WEEK_ORDER = [1,2,3,4,5,6,0];
   const MONTH_NAMES = ["jan","feb","mar","apr","mai","jun","jul","aug","sep","okt","nov","des"];
+  const MONTH_FULL  = ["januar","februar","mars","april","mai","juni",
+                       "juli","august","september","oktober","november","desember"];
 
   function pad(n){return n<10?"0"+n:""+n;}
   function dateKey(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
@@ -364,6 +426,8 @@
   let state = null;  // { days: { "yyyy-mm-dd": {weekday,label,items,pushedIn,skipped} } }
   let view  = "today";
   let saveTimer = null;
+  let logMonth = null;   // første dag i måneden som vises i loggen
+  let logValgt = null;   // valgt dato i kalenderen
 
   // Standardplanen speiler den opprinnelige hardkodede planen, slik at
   // eksisterende brukere ikke merker noe før de selv endrer noe.
@@ -595,6 +659,72 @@
   function clearPlan(){
     plan = defaultPlan();
     planChanged();
+  }
+
+  /* ---------- Historikk ---------- */
+
+  // Datonøklene er yyyy-mm-dd, som sorterer kronologisk som tekst.
+  function classifyDay(dateOrKey){
+    const key   = typeof dateOrKey === "string" ? dateOrKey : dateKey(dateOrKey);
+    const tKey  = dateKey(startOfDay(new Date()));
+    const day   = state.days[key];
+
+    if(!day || day.items.length === 0){
+      // En dag der alt ble flyttet videre står igjen uten øvelser.
+      return (day && day.skipped) ? "hoppet" : "hvile";
+    }
+    if(key > tKey) return "planlagt";
+
+    const done = day.items.filter(i=>i.done).length;
+    // Hoppet over: øvelsene som er igjen er de som faktisk ble gjort.
+    if(day.skipped) return "delvis";
+    if(done === day.items.length) return "fullfort";
+    if(key === tKey) return done > 0 ? "pagar" : "idag";
+    return done > 0 ? "delvis" : "ikke";
+  }
+
+  // Hviledager bryter ikke rekka, de hoppes over. Dagens økt teller ikke mot
+  // deg før dagen er omme.
+  function computeStreak(){
+    const today = startOfDay(new Date());
+    let streak = 0;
+    let i = classifyDay(today) === "fullfort" ? 0 : 1;
+    for(; i < 400; i++){
+      const c = classifyDay(addDays(today, -i));
+      if(c === "hvile") continue;
+      if(c === "fullfort") streak++;
+      else break;
+    }
+    return streak;
+  }
+
+  function computeStats(){
+    const tKey = dateKey(startOfDay(new Date()));
+    const keys = Object.keys(state.days).filter(k => k <= tKey).sort();
+
+    let okter = 0, ovelser = 0, maned = 0;
+    const manedPrefix = tKey.slice(0,7);
+    keys.forEach(k=>{
+      ovelser += state.days[k].items.filter(i=>i.done).length;
+      if(classifyDay(k) === "fullfort"){
+        okter++;
+        if(k.indexOf(manedPrefix) === 0) maned++;
+      }
+    });
+
+    const streak = computeStreak();
+    let best = streak, run = 0;
+    if(keys.length){
+      let d = new Date(keys[0]+"T00:00:00");
+      const slutt = startOfDay(new Date());
+      while(d <= slutt){
+        const c = classifyDay(d);
+        if(c === "fullfort"){ run++; if(run > best) best = run; }
+        else if(c !== "hvile" && c !== "pagar" && c !== "idag"){ run = 0; }
+        d = addDays(d,1);
+      }
+    }
+    return {streak, best, okter, ovelser, maned, harHistorikk: okter > 0 || keys.length > 0};
   }
 
   /* ---------- DOM-hjelpere ---------- */
@@ -893,9 +1023,160 @@
     return card;
   }
 
+  /* ---------- Visning: logg ---------- */
+
+  const KLASSE_TEKST = {
+    fullfort: "Fullført",
+    delvis:   "Delvis fullført",
+    ikke:     "Ikke trent",
+    hoppet:   "Hoppet over",
+    planlagt: "Planlagt",
+    pagar:    "Påbegynt",
+    idag:     "Ikke begynt",
+    hvile:    "Hviledag"
+  };
+
+  function renderStreak(){
+    const st = computeStats();
+    if(st.streak === 0 && st.okter === 0) return null;
+
+    const banner = el("div", {class:"streak-banner"});
+    banner.appendChild(el("div", {class:"streak-flame"}, [text(st.streak > 0 ? "🔥" : "💪")]));
+    const txt = el("div", {class:"streak-text"});
+    txt.appendChild(el("div", {class:"streak-num"}, [text(
+      st.streak > 0
+        ? st.streak + (st.streak === 1 ? " økt på rad" : " økter på rad")
+        : (st.okter + (st.okter === 1 ? " økt fullført" : " økter fullført"))
+    )]));
+    txt.appendChild(el("div", {class:"streak-sub"}, [text(
+      st.streak > 0
+        ? "Totalt " + st.okter + (st.okter === 1 ? " økt" : " økter") +
+          (st.best > st.streak ? ". Rekorden din er " + st.best + " på rad." : ". Det er rekord.")
+        : "Kom i gang igjen, så bygger du en ny rekke."
+    )]));
+    banner.appendChild(txt);
+    return banner;
+  }
+
+  function renderDayDetail(key){
+    const day = state.days[key];
+    const d   = new Date(key+"T00:00:00");
+    const wrap = el("div", {class:"day-detail"});
+    wrap.appendChild(el("div", {class:"section-title"},
+      [text(DAY_NAMES[d.getDay()]+" "+fmtShort(d))]));
+
+    const card = el("div", {class:"card"});
+    const c = classifyDay(key);
+    card.appendChild(el("div", {class:"plan-head"}, [
+      el("div", {class:"plan-weekday"}, [text((day && day.label) || "Økt")]),
+      el("div", {class:"plan-meta"},    [text(KLASSE_TEKST[c] || "")])
+    ]));
+    if(!day || day.items.length===0){
+      card.appendChild(el("div", {class:"rest-msg"}, [text(
+        c === "hoppet" ? "Alt ble flyttet til dagen etter." : "Ingen økt denne dagen."
+      )]));
+    }else{
+      day.items.forEach(i=>{
+        const row = el("div", {class:"item"+(i.done?" done":"")});
+        row.appendChild(el("div", {class:"check"}, [text(i.done?"✓":"")]));
+        const nm = el("div", {class:"item-name"}, [text(i.name)]);
+        if(i.pushedFrom) nm.appendChild(el("span", {class:"pushed-tag"}, [text("flyttet")]));
+        row.appendChild(nm);
+        row.appendChild(el("div", {class:"item-amount"}, [text(i.amount)]));
+        card.appendChild(row);
+      });
+    }
+    wrap.appendChild(card);
+    return wrap;
+  }
+
+  function renderLog(){
+    const wrap  = el("div");
+    const stats = computeStats();
+    const today = startOfDay(new Date());
+    if(!logMonth) logMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    const grid = el("div", {class:"stats"});
+    [[stats.streak,"på rad"],[stats.best,"rekord"],[stats.okter,"totalt"]].forEach(([v,l])=>{
+      grid.appendChild(el("div", {class:"stat"}, [
+        el("div", {class:"stat-val"}, [text(String(v))]),
+        el("div", {class:"stat-lab"}, [text(l)])
+      ]));
+    });
+    wrap.appendChild(grid);
+
+    if(!stats.harHistorikk){
+      wrap.appendChild(el("div", {class:"log-empty"}, [text(
+        "Ingen økter logget ennå. Så snart dere huker av den første, dukker den opp her."
+      )]));
+      return wrap;
+    }
+
+    // Månedsnavigasjon. Fram-knappen stopper ved inneværende måned.
+    const nav = el("div", {class:"cal-nav"});
+    const forrige = el("button", {onclick:()=>{
+      logMonth = new Date(logMonth.getFullYear(), logMonth.getMonth()-1, 1);
+      logValgt = null; render();
+    }}, [text("‹")]);
+    const neste = el("button", {onclick:()=>{
+      logMonth = new Date(logMonth.getFullYear(), logMonth.getMonth()+1, 1);
+      logValgt = null; render();
+    }}, [text("›")]);
+    if(logMonth.getFullYear() === today.getFullYear() && logMonth.getMonth() === today.getMonth()){
+      neste.disabled = true;
+    }
+    nav.appendChild(forrige);
+    nav.appendChild(el("div", {class:"cal-month"},
+      [text(MONTH_FULL[logMonth.getMonth()]+" "+logMonth.getFullYear())]));
+    nav.appendChild(neste);
+    wrap.appendChild(nav);
+
+    const cal = el("div", {class:"cal-grid"});
+    WEEK_ORDER.forEach(wd => cal.appendChild(el("div", {class:"cal-dow"}, [text(DAY_SHORT[wd])])));
+
+    // Uka starter på mandag, så søndag (getDay()===0) havner sist.
+    const forskyv = (new Date(logMonth.getFullYear(), logMonth.getMonth(), 1).getDay() + 6) % 7;
+    for(let i=0;i<forskyv;i++) cal.appendChild(el("div", {class:"cal-cell tom"}));
+
+    const dagerIMnd = new Date(logMonth.getFullYear(), logMonth.getMonth()+1, 0).getDate();
+    for(let dag=1; dag<=dagerIMnd; dag++){
+      const d = new Date(logMonth.getFullYear(), logMonth.getMonth(), dag);
+      const key = dateKey(d);
+      const c   = classifyDay(key);
+      const kan = !!(state.days[key] && state.days[key].items.length) || c === "hoppet";
+      const cell = el("div", {
+        class: "cal-cell "+c+(logValgt===key?" valgt":""),
+        title: KLASSE_TEKST[c] || ""
+      }, [text(String(dag))]);
+      if(kan) cell.addEventListener("click", ()=>{
+        logValgt = (logValgt===key) ? null : key;
+        render();
+      });
+      cal.appendChild(cell);
+    }
+    wrap.appendChild(cal);
+
+    const legend = el("div", {class:"legend"});
+    [["fullfort","Fullført"],["delvis","Delvis"],["ikke","Ikke trent"],["planlagt","Planlagt"]]
+      .forEach(([k,l])=>{
+        const sp = el("span", {});
+        sp.appendChild(el("i", {class:"cal-cell "+k}));
+        sp.appendChild(text(l));
+        legend.appendChild(sp);
+      });
+    wrap.appendChild(legend);
+
+    if(logValgt) wrap.appendChild(renderDayDetail(logValgt));
+    return wrap;
+  }
+
   /* ---------- Render ---------- */
 
-  function setView(v){ view = v; render(); }
+  function setView(v){
+    if(v !== "log") logValgt = null;
+    view = v;
+    render();
+  }
 
   function render(){
     const app = document.getElementById("app");
@@ -907,18 +1188,20 @@
     const visVelkomst = view==="today" && isPlanEmpty() && !harNoeIDag;
 
     app.appendChild(el("div", {class:"eyebrow"}, [text("Din treningsplan")]));
-    app.appendChild(el("h1", {}, [text(
-      visVelkomst ? "Kom i gang" : (view==="today" ? DAY_NAMES[today.getDay()]+"s økt" : "Plan")
-    )]));
+    const titler = {today: DAY_NAMES[today.getDay()]+"s økt", plan: "Plan", log: "Logg"};
+    app.appendChild(el("h1", {}, [text(visVelkomst ? "Kom i gang" : titler[view])]));
 
     const tabs = el("div", {class:"tabs"});
-    tabs.appendChild(el("div", {class:"tab"+(view==="today"?" active":""), onclick:()=>setView("today")}, [text("I dag")]));
-    tabs.appendChild(el("div", {class:"tab"+(view==="plan" ?" active":""), onclick:()=>setView("plan")},  [text("Plan")]));
+    [["today","I dag"],["plan","Plan"],["log","Logg"]].forEach(([v,l])=>{
+      tabs.appendChild(el("div", {class:"tab"+(view===v?" active":""), onclick:()=>setView(v)}, [text(l)]));
+    });
     app.appendChild(tabs);
 
     if(visVelkomst){
       app.appendChild(renderWelcome());
     }else if(view==="today"){
+      const streak = renderStreak();
+      if(streak) app.appendChild(streak);
       app.appendChild(renderTodayCard());
       app.appendChild(renderUpcoming());
       const planned = WEEK_ORDER.filter(wd=>plan.days[wd]).map(wd=>{
@@ -930,8 +1213,10 @@
           ? planned.join(" · ")+". Trykk \"Fikk ikke trent\" for å flytte økta til neste dag."
           : "Ingen økter satt opp ennå. Gå til \"Plan\" og bygg uka di."
       )]));
-    }else{
+    }else if(view==="plan"){
       app.appendChild(renderPlan());
+    }else{
+      app.appendChild(renderLog());
     }
   }
 

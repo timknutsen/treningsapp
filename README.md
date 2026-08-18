@@ -10,9 +10,16 @@ for å flytte dagens gjenstående øvelser til neste dag.
   satt opp vises en kort veiledning i stedet
 - **Plan** — sett opp hver ukedag: legg til øvelser fra banken eller egne,
   juster mengde og antall runder, eller gjør dagen til hviledag
+- **Logg** — rekke av fullførte økter, rekord og totaler, og en månedskalender
+  der hver dag er fargelagt etter hvordan den gikk. Trykk på en dag for å se
+  hvilke øvelser som ble gjort
 
 Øvelsesbanken dekker bein, overkropp, kjerne og kondisjon. Finner du ikke
 øvelsen, legg den til som egen øvelse nederst i velgeren.
+
+Rekka teller fullførte økter etter hverandre. Hviledager bryter den ikke, og
+dagens økt teller først når den er huket av, så du taper ikke rekka på å trene
+om kvelden.
 
 Endringer i planen slår inn på kommende dager med det samme. Dager du allerede
 har huket av på, hoppet over, eller flyttet øvelser til, blir stående urørt.
