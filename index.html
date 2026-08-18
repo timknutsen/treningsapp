@@ -259,11 +259,7 @@
   }
 
   function pushUnfinished(fromKey){
-    const today = startOfDay(new Date());
-    let cursorKey = fromKey;
-    let cursorDate = new Date(fromKey+"T00:00:00");
-
-    const source = state.days[cursorKey];
+    const source = state.days[fromKey];
     if(!source) return;
     const unfinished = source.items.filter(i=>!i.done);
     if(unfinished.length===0) return;
@@ -271,13 +267,24 @@
     source.items = source.items.filter(i=>i.done);
     source.skipped = true;
 
-    let nextDate = addDays(cursorDate,1);
-    let nextKey = dateKey(nextDate);
+    const nextDate = addDays(new Date(fromKey+"T00:00:00"), 1);
+    const nextKey = dateKey(nextDate);
     if(!state.days[nextKey]){
       const def = defaultForDate(nextDate);
       state.days[nextKey] = def || {weekday:null, items:[]};
     }
-    const carried = unfinished.map(i=>({...i, pushedFrom: fromKey, id: i.id+"-from-"+fromKey}));
+    // baseId ligger fast gjennom gjentatte flyttinger, slik at id-en ikke
+    // vokser med ett "-from-"-ledd for hver dag ei økt blir utsatt.
+    const carried = unfinished.map(i=>{
+      const baseId = i.baseId || i.id;
+      return {
+        ...i,
+        baseId,
+        origin: i.origin || fromKey,
+        pushedFrom: fromKey,
+        id: baseId+"-from-"+nextKey
+      };
+    });
     state.days[nextKey].items = state.days[nextKey].items.concat(carried);
     state.days[nextKey].pushedIn = true;
 
@@ -307,7 +314,7 @@
   }
   function text(t){ return document.createTextNode(t); }
 
-  function renderItemRow(dayKey, item, showRoundHeader){
+  function renderItemRow(dayKey, item){
     const row = el("div", {class:"item"+(item.done?" done":"")});
     const check = el("div", {class:"check", onclick:()=>toggleItem(dayKey, item.id)}, [text(item.done?"✓":"")]);
     const name = el("div", {class:"item-name", onclick:()=>toggleItem(dayKey, item.id)});

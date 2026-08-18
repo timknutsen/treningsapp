@@ -1,4 +1,4 @@
-const CACHE_NAME = "treningsplan-v1";
+const CACHE_NAME = "treningsplan-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -23,19 +23,37 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+function cachePut(request, response) {
+  const copy = response.clone();
+  caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+  return response;
+}
+
 self.addEventListener("fetch", (event) => {
+  const req = event.request;
+  if (req.method !== "GET") return;
+
+  const isHtml =
+    req.mode === "navigate" ||
+    (req.headers.get("accept") || "").includes("text/html");
+
+  // HTML hentes fra nett først, slik at en ny versjon av appen slår gjennom
+  // uten at CACHE_NAME må bumpes. Cache brukes bare når nettet er nede.
+  if (isHtml) {
+    event.respondWith(
+      fetch(req)
+        .then((res) => cachePut(req, res))
+        .catch(() =>
+          caches.match(req).then((cached) => cached || caches.match("./index.html"))
+        )
+    );
+    return;
+  }
+
+  // Ikoner og manifest endrer seg sjelden: cache først, nett som reserve.
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return (
-        cached ||
-        fetch(event.request)
-          .then((res) => {
-            const copy = res.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-            return res;
-          })
-          .catch(() => cached)
-      );
-    })
+    caches.match(req).then(
+      (cached) => cached || fetch(req).then((res) => cachePut(req, res))
+    )
   );
 });
