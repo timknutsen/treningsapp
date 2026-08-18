@@ -152,6 +152,26 @@
 
   .loading{padding:60px 0; text-align:center; color:var(--text-dim); font-size:14px;}
 
+  .welcome h2{font-size:19px; font-weight:800; margin:0 0 10px;}
+  .welcome p{font-size:14.5px; line-height:1.6; color:var(--text-dim); margin:0 0 14px;}
+  .steps{list-style:none; margin:0 0 20px; padding:0; counter-reset:step;}
+  .steps li{
+    position:relative; padding:9px 0 9px 34px; font-size:14.5px;
+    font-weight:600; line-height:1.45; counter-increment:step;
+  }
+  .steps li::before{
+    content:counter(step);
+    position:absolute; left:0; top:8px;
+    width:22px; height:22px; border-radius:50%;
+    background:var(--accent-dim); color:var(--accent);
+    font-size:12px; font-weight:800;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .plan-intro{
+    font-size:14px; line-height:1.6; color:var(--text-dim);
+    margin:0 0 16px 2px;
+  }
+
   /* ---- Planlegger ---- */
   .plan-day{padding:16px 18px;}
   .plan-day.rest{opacity:.62;}
@@ -334,8 +354,9 @@
 
   /* ---------- Lagring ---------- */
 
-  const PLAN_KEY    = "workout-plan-v1";
-  const STORAGE_KEY = "workout-schedule-v1";
+  const PLAN_KEY    = "workout-plan-v2";
+  const STORAGE_KEY = "workout-schedule-v2";
+  const LEGACY_KEYS = ["workout-plan-v1", "workout-schedule-v1"];
   const WINDOW_DAYS = 60;
   const MAX_ROUNDS  = 6;
 
@@ -346,24 +367,13 @@
 
   // Standardplanen speiler den opprinnelige hardkodede planen, slik at
   // eksisterende brukere ikke merker noe før de selv endrer noe.
+  // Appen starter uten økter. Uka settes opp under "Plan".
   function defaultPlan(){
-    return {
-      days: {
-        6: {label:"Styrke", rounds:2, exercises:[
-          {exId:"spensthopp",   amount:"20 stk"},
-          {exId:"utfall",       amount:"30 stk"},
-          {exId:"pushups",      amount:"12 stk"},
-          {exId:"hangups",      amount:"5 stk"},
-          {exId:"legraise",     amount:"15 stk"},
-          {exId:"hold90",       amount:"90 sek"},
-          {exId:"planke",       amount:"60 sek"},
-          {exId:"ryggenhev",    amount:"40 sek"}
-        ]},
-        0: {label:"Løping", rounds:1, exercises:[
-          {exId:"loping", amount:"4 km"}
-        ]}
-      }
-    };
+    return { days: {} };
+  }
+
+  function isPlanEmpty(){
+    return Object.keys(plan.days).length === 0;
   }
 
   function loadPlan(){
@@ -456,6 +466,8 @@
   }
 
   async function load(){
+    // Oppsettet fra tidligere versjoner ryddes bort, slik at appen starter blank.
+    LEGACY_KEYS.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
     plan = loadPlan();
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -580,7 +592,7 @@
     planChanged();
   }
 
-  function resetPlan(){
+  function clearPlan(){
     plan = defaultPlan();
     planChanged();
   }
@@ -842,17 +854,43 @@
 
   function renderPlan(){
     const wrap = el("div");
+    if(isPlanEmpty()){
+      wrap.appendChild(el("div", {class:"plan-intro"}, [text(
+        "Trykk på en dag for å legge til øvelser. Dager dere hopper over blir hviledager."
+      )]));
+    }
     wrap.appendChild(el("div", {class:"section-title"}, [text("Din uke")]));
     WEEK_ORDER.forEach(wd => wrap.appendChild(renderPlanDay(wd)));
-    const actions = el("div", {class:"plan-actions"});
-    actions.appendChild(el("button", {class:"btn-ghost", onclick:()=>{
-      if(confirm("Tilbakestille til standardplanen? Øktene du allerede har begynt på beholdes.")) resetPlan();
-    }}, [text("Tilbakestill planen")]));
-    wrap.appendChild(actions);
+    if(!isPlanEmpty()){
+      const actions = el("div", {class:"plan-actions"});
+      actions.appendChild(el("button", {class:"btn-ghost", onclick:()=>{
+        if(confirm("Tømme hele planen? Økter du allerede har begynt på beholdes.")) clearPlan();
+      }}, [text("Tøm planen")]));
+      wrap.appendChild(actions);
+    }
     wrap.appendChild(el("div", {class:"footer-note"}, [text(
       "Endringer slår inn på kommende dager med det samme. Dager du har huket av på, hoppet over eller flyttet øvelser til, blir stående."
     )]));
     return wrap;
+  }
+
+  function renderWelcome(){
+    const card = el("div", {class:"card today-card welcome"});
+    card.appendChild(el("h2", {}, [text("Velkommen, gutta")]));
+    card.appendChild(el("p", {}, [text(
+      "Appen er tom med vilje. Uka er deres å sette opp, og dere kan endre den når som helst."
+    )]));
+    const steps = el("ul", {class:"steps"});
+    [
+      "Gå til \"Plan\" og velg en dag dere vil trene.",
+      "Plukk øvelser fra banken, eller legg inn deres egne.",
+      "Sett mengde og antall runder.",
+      "Kom tilbake hit på treningsdagen og huk av."
+    ].forEach(t => steps.appendChild(el("li", {}, [text(t)])));
+    card.appendChild(steps);
+    card.appendChild(el("button", {class:"btn-primary", style:"width:100%",
+      onclick:()=>setView("plan")}, [text("Sett opp uka")]));
+    return card;
   }
 
   /* ---------- Render ---------- */
@@ -863,10 +901,14 @@
     const app = document.getElementById("app");
     app.innerHTML = "";
 
-    const today = startOfDay(new Date());
+    const today    = startOfDay(new Date());
+    const todayDay = state.days[dateKey(today)];
+    const harNoeIDag  = !!(todayDay && todayDay.items.length);
+    const visVelkomst = view==="today" && isPlanEmpty() && !harNoeIDag;
+
     app.appendChild(el("div", {class:"eyebrow"}, [text("Din treningsplan")]));
     app.appendChild(el("h1", {}, [text(
-      view==="today" ? DAY_NAMES[today.getDay()]+"s økt" : "Plan"
+      visVelkomst ? "Kom i gang" : (view==="today" ? DAY_NAMES[today.getDay()]+"s økt" : "Plan")
     )]));
 
     const tabs = el("div", {class:"tabs"});
@@ -874,7 +916,9 @@
     tabs.appendChild(el("div", {class:"tab"+(view==="plan" ?" active":""), onclick:()=>setView("plan")},  [text("Plan")]));
     app.appendChild(tabs);
 
-    if(view==="today"){
+    if(visVelkomst){
+      app.appendChild(renderWelcome());
+    }else if(view==="today"){
       app.appendChild(renderTodayCard());
       app.appendChild(renderUpcoming());
       const planned = WEEK_ORDER.filter(wd=>plan.days[wd]).map(wd=>{
