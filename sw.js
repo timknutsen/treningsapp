@@ -1,5 +1,5 @@
-const CACHE_NAME = "treningsplan-v2";
-const ASSETS = [
+const CACHE_NAME = "treningsplan-v3";
+const PRECACHE = [
   "./",
   "./index.html",
   "./manifest.json",
@@ -7,9 +7,13 @@ const ASSETS = [
   "./icon-512.png"
 ];
 
+// Bare filer som praktisk talt aldri endrer seg serveres fra cache først.
+// Alt annet, index.html inkludert, hentes fra nett så lenge nettet svarer.
+const CACHE_FIRST = [/icon-\d+\.png$/, /manifest\.json$/];
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE))
   );
   self.skipWaiting();
 });
@@ -24,8 +28,10 @@ self.addEventListener("activate", (event) => {
 });
 
 function cachePut(request, response) {
-  const copy = response.clone();
-  caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+  if (response && response.ok) {
+    const copy = response.clone();
+    caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+  }
   return response;
 }
 
@@ -33,27 +39,26 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
 
-  const isHtml =
-    req.mode === "navigate" ||
-    (req.headers.get("accept") || "").includes("text/html");
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
 
-  // HTML hentes fra nett først, slik at en ny versjon av appen slår gjennom
-  // uten at CACHE_NAME må bumpes. Cache brukes bare når nettet er nede.
-  if (isHtml) {
+  if (CACHE_FIRST.some((re) => re.test(url.pathname))) {
     event.respondWith(
-      fetch(req)
-        .then((res) => cachePut(req, res))
-        .catch(() =>
-          caches.match(req).then((cached) => cached || caches.match("./index.html"))
-        )
+      caches.match(req).then(
+        (cached) => cached || fetch(req).then((res) => cachePut(req, res))
+      )
     );
     return;
   }
 
-  // Ikoner og manifest endrer seg sjelden: cache først, nett som reserve.
+  // cache: "no-cache" tvinger revalidering mot serveren. Uten den kan
+  // nettleserens egen HTTP-cache gi oss en gammel index.html tilbake,
+  // slik at en ny versjon av appen ikke slår gjennom.
   event.respondWith(
-    caches.match(req).then(
-      (cached) => cached || fetch(req).then((res) => cachePut(req, res))
-    )
+    fetch(req.url, { cache: "no-cache", credentials: "same-origin" })
+      .then((res) => cachePut(req, res))
+      .catch(() =>
+        caches.match(req).then((cached) => cached || caches.match("./index.html"))
+      )
   );
 });
