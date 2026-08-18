@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#14161a">
+<title>Treningsplan</title>
+<style>
+  :root{
+    --bg: #14161a;
+    --bg-raised: #1c1f24;
+    --line: #2a2e35;
+    --text: #ecece6;
+    --text-dim: #8b909a;
+    --accent: #e3a44b;
+    --accent-dim: #6b532a;
+    --done: #4c9a72;
+    --skip: #c25b4a;
+    --radius: 14px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    min-height:100vh;
+    min-height:100dvh;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .wrap{max-width:480px; margin:0 auto; padding:28px 18px 60px;}
+
+  .eyebrow{
+    font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--text-dim); font-weight:600; margin-bottom:4px;
+  }
+  h1{
+    font-size:28px; font-weight:800; letter-spacing:-0.02em; margin:0 0 22px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .card{
+    background:var(--bg-raised);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:20px;
+    margin-bottom:16px;
+  }
+
+  .today-card{position:relative; overflow:hidden;}
+  .today-card::before{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:3px;
+    background: linear-gradient(90deg, var(--accent), transparent 80%);
+  }
+  .today-label{
+    display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px;
+  }
+  .today-weekday{font-size:20px; font-weight:800;}
+  .today-date{font-size:13px; color:var(--text-dim);}
+
+  .rest-msg{color:var(--text-dim); font-size:15px; line-height:1.5; padding:8px 0 4px;}
+
+  .round-label{
+    font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin:14px 0 8px;
+  }
+  .round-label:first-child{margin-top:0;}
+
+  .item{
+    display:flex; align-items:center; gap:12px;
+    padding:11px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .item:last-child{border-bottom:none;}
+  .check{
+    width:24px; height:24px; min-width:24px; border-radius:7px;
+    border:2px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:900; color:transparent;
+    transition: all .15s ease;
+  }
+  .item.done .check{background:var(--done); border-color:var(--done); color:var(--bg);}
+  .item.done .item-name{color:var(--text-dim); text-decoration:line-through; text-decoration-color:var(--line);}
+  .item-name{font-size:15px; font-weight:600; flex:1;}
+  .item-amount{font-size:14px; color:var(--text-dim); font-variant-numeric:tabular-nums; font-weight:600;}
+  .pushed-tag{
+    font-size:10px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--skip); border:1px solid var(--skip); border-radius:5px;
+    padding:2px 5px; margin-left:6px; font-weight:700;
+  }
+
+  .btn-row{display:flex; gap:10px; margin-top:18px;}
+  button{
+    font-family:inherit; border:none; border-radius:11px; padding:13px 16px;
+    font-size:14.5px; font-weight:700; cursor:pointer;
+    transition: transform .08s ease, opacity .15s ease;
+  }
+  button:active{transform:scale(0.97);}
+  .btn-skip{
+    flex:1; background:transparent; color:var(--skip);
+    border:1.5px solid var(--skip);
+  }
+  .btn-primary{
+    flex:1; background:var(--accent); color:#1c1608;
+  }
+  button:disabled{opacity:.35; cursor:default;}
+
+  .done-msg{
+    display:flex; align-items:center; gap:10px;
+    color:var(--done); font-weight:700; font-size:15px; padding:6px 0;
+  }
+
+  .section-title{
+    font-size:12px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--text-dim); font-weight:700; margin:26px 0 10px 2px;
+  }
+
+  .rail{list-style:none; margin:0; padding:0;}
+  .rail li{
+    display:flex; align-items:center; gap:12px;
+    padding:10px 4px; border-bottom:1px solid var(--line);
+  }
+  .rail li:last-child{border-bottom:none;}
+  .rail-dot{
+    width:8px; height:8px; border-radius:50%; background:var(--line); min-width:8px;
+  }
+  .rail-dot.active{background:var(--accent);}
+  .rail-day{font-size:13.5px; font-weight:700; width:76px; color:var(--text-dim); flex-shrink:0;}
+  .rail-items{font-size:13px; color:var(--text-dim); flex:1;}
+  .rail-items b{color:var(--text); font-weight:600;}
+
+  .footer-note{
+    text-align:center; color:var(--text-dim); font-size:12px; margin-top:30px; line-height:1.6;
+  }
+  .footer-note a{color:var(--accent); text-decoration:none;}
+
+  .loading{padding:60px 0; text-align:center; color:var(--text-dim); font-size:14px;}
+
+  .install-hint{
+    background:var(--bg-raised); border:1px dashed var(--line); border-radius:var(--radius);
+    padding:14px 16px; font-size:13px; color:var(--text-dim); line-height:1.5; margin-bottom:16px;
+  }
+  .install-hint b{color:var(--text);}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="loading">Laster økt...</div>
+</div>
+
+<script>
+(function(){
+  const DAY_NAMES = ["Søndag","Mandag","Tirsdag","Onsdag","Torsdag","Fredag","Lørdag"];
+  const MONTH_NAMES = ["jan","feb","mar","apr","mai","jun","jul","aug","sep","okt","nov","des"];
+
+  function pad(n){return n<10?"0"+n:""+n;}
+  function dateKey(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+  function addDays(d,n){const r=new Date(d); r.setDate(r.getDate()+n); return r;}
+  function startOfDay(d){const r=new Date(d); r.setHours(0,0,0,0); return r;}
+  function fmtShort(d){return d.getDate()+". "+MONTH_NAMES[d.getMonth()];}
+
+  const SAT_EXERCISES = [
+    {name:"Spensthopp", amount:"20 stk"},
+    {name:"Utfall m/ 3 kg vekter", amount:"30 stk"},
+    {name:"Pushups", amount:"12 stk"},
+    {name:"Hang ups", amount:"5 stk"},
+    {name:"Leg raise", amount:"15 stk"},
+    {name:"90 grader hold", amount:"90 sek"},
+    {name:"Planke", amount:"60 sek"},
+    {name:"Ryggenhev", amount:"40 sek"}
+  ];
+
+  function buildSaturdayItems(){
+    const items = [];
+    for(let round=1; round<=2; round++){
+      SAT_EXERCISES.forEach((ex,i)=>{
+        items.push({
+          id: "sat-r"+round+"-"+i,
+          name: ex.name,
+          amount: ex.amount,
+          round: round,
+          done: false
+        });
+      });
+    }
+    return items;
+  }
+
+  function buildSundayItems(){
+    return [{id:"run", name:"Løping", amount:"4 km", round:null, done:false}];
+  }
+
+  function defaultForDate(date){
+    const wd = date.getDay();
+    if(wd===6) return {weekday:"lørdag", items: buildSaturdayItems()};
+    if(wd===0) return {weekday:"søndag", items: buildSundayItems()};
+    return null;
+  }
+
+  const WINDOW_DAYS = 60;
+  const STORAGE_KEY = "workout-schedule-v1";
+
+  let state = null; // { days: { "yyyy-mm-dd": {weekday, items:[...], pushedIn:bool, skipped:bool} } }
+  let saveTimer = null;
+
+  function ensureWindow(st){
+    const today = startOfDay(new Date());
+    for(let i=0;i<WINDOW_DAYS;i++){
+      const d = addDays(today,i);
+      const key = dateKey(d);
+      if(!st.days[key]){
+        const def = defaultForDate(d);
+        if(def) st.days[key] = def;
+      }
+    }
+    return st;
+  }
+
+  async function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) state = JSON.parse(raw);
+    }catch(e){
+      state = null;
+    }
+    if(!state || !state.days) state = {days:{}};
+    ensureWindow(state);
+    await persist();
+    render();
+  }
+
+  async function persist(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }catch(e){
+      console.error("Kunne ikke lagre lokalt:", e);
+    }
+  }
+
+  function queuePersist(){
+    if(saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(persist, 150);
+  }
+
+  function toggleItem(dayKey, itemId){
+    const day = state.days[dayKey];
+    if(!day) return;
+    const item = day.items.find(i=>i.id===itemId);
+    if(!item) return;
+    item.done = !item.done;
+    queuePersist();
+    render();
+  }
+
+  function pushUnfinished(fromKey){
+    const today = startOfDay(new Date());
+    let cursorKey = fromKey;
+    let cursorDate = new Date(fromKey+"T00:00:00");
+
+    const source = state.days[cursorKey];
+    if(!source) return;
+    const unfinished = source.items.filter(i=>!i.done);
+    if(unfinished.length===0) return;
+
+    source.items = source.items.filter(i=>i.done);
+    source.skipped = true;
+
+    let nextDate = addDays(cursorDate,1);
+    let nextKey = dateKey(nextDate);
+    if(!state.days[nextKey]){
+      const def = defaultForDate(nextDate);
+      state.days[nextKey] = def || {weekday:null, items:[]};
+    }
+    const carried = unfinished.map(i=>({...i, pushedFrom: fromKey, id: i.id+"-from-"+fromKey}));
+    state.days[nextKey].items = state.days[nextKey].items.concat(carried);
+    state.days[nextKey].pushedIn = true;
+
+    ensureWindow(state);
+    queuePersist();
+    render();
+  }
+
+  function markAllDone(dayKey){
+    const day = state.days[dayKey];
+    if(!day) return;
+    day.items.forEach(i=>i.done=true);
+    queuePersist();
+    render();
+  }
+
+  function el(tag, attrs, children){
+    const e = document.createElement(tag);
+    if(attrs) Object.keys(attrs).forEach(k=>{
+      if(k==="class") e.className = attrs[k];
+      else if(k==="html") e.innerHTML = attrs[k];
+      else if(k.startsWith("on")) e.addEventListener(k.slice(2), attrs[k]);
+      else e.setAttribute(k, attrs[k]);
+    });
+    (children||[]).forEach(c=>{ if(c) e.appendChild(c); });
+    return e;
+  }
+  function text(t){ return document.createTextNode(t); }
+
+  function renderItemRow(dayKey, item, showRoundHeader){
+    const row = el("div", {class:"item"+(item.done?" done":"")});
+    const check = el("div", {class:"check", onclick:()=>toggleItem(dayKey, item.id)}, [text(item.done?"✓":"")]);
+    const name = el("div", {class:"item-name", onclick:()=>toggleItem(dayKey, item.id)});
+    name.appendChild(text(item.name));
+    if(item.pushedFrom){
+      name.appendChild(el("span", {class:"pushed-tag"}, [text("flyttet")]));
+    }
+    const amount = el("div", {class:"item-amount"}, [text(item.amount)]);
+    row.appendChild(check);
+    row.appendChild(name);
+    row.appendChild(amount);
+    return row;
+  }
+
+  function renderTodayCard(){
+    const today = startOfDay(new Date());
+    const key = dateKey(today);
+    const day = state.days[key];
+
+    const card = el("div", {class:"card today-card"});
+    const label = el("div", {class:"today-label"});
+    label.appendChild(el("div", {class:"today-weekday"}, [text(DAY_NAMES[today.getDay()])]));
+    label.appendChild(el("div", {class:"today-date"}, [text(fmtShort(today))]));
+    card.appendChild(label);
+
+    if(!day || day.items.length===0){
+      card.appendChild(el("div", {class:"rest-msg"}, [text(
+        day && day.skipped
+          ? "Ingen økt igjen i dag — alt er flyttet videre."
+          : "Hviledag. Ingen planlagt økt i dag."
+      )]));
+      return card;
+    }
+
+    const allDone = day.items.every(i=>i.done);
+
+    if(day.weekday==="lørdag" || day.items.some(i=>i.round)){
+      let round1 = day.items.filter(i=>i.round===1);
+      let round2 = day.items.filter(i=>i.round===2);
+      let extra = day.items.filter(i=>!i.round);
+      if(round1.length){
+        card.appendChild(el("div", {class:"round-label"}, [text("Runde 1")]));
+        round1.forEach(i=>card.appendChild(renderItemRow(key,i)));
+      }
+      if(round2.length){
+        card.appendChild(el("div", {class:"round-label"}, [text("Runde 2")]));
+        round2.forEach(i=>card.appendChild(renderItemRow(key,i)));
+      }
+      if(extra.length){
+        card.appendChild(el("div", {class:"round-label"}, [text("Flyttet inn")]));
+        extra.forEach(i=>card.appendChild(renderItemRow(key,i)));
+      }
+    } else {
+      day.items.forEach(i=>card.appendChild(renderItemRow(key,i)));
+    }
+
+    if(allDone){
+      card.appendChild(el("div", {class:"done-msg"}, [text("✓ Økta er fullført. Bra jobba.")]));
+    } else {
+      const btnRow = el("div", {class:"btn-row"});
+      const skipBtn = el("button", {class:"btn-skip", onclick:()=>pushUnfinished(key)}, [text("Fikk ikke trent i dag")]);
+      const doneBtn = el("button", {class:"btn-primary", onclick:()=>markAllDone(key)}, [text("Merk alt fullført")]);
+      btnRow.appendChild(skipBtn);
+      btnRow.appendChild(doneBtn);
+      card.appendChild(btnRow);
+    }
+
+    return card;
+  }
+
+  function renderUpcoming(){
+    const today = startOfDay(new Date());
+    const wrap = el("div");
+    wrap.appendChild(el("div", {class:"section-title"}, [text("Neste dager")]));
+    const rail = el("ul", {class:"rail"});
+
+    let shown = 0;
+    for(let i=1; i<=21 && shown<6; i++){
+      const d = addDays(today,i);
+      const key = dateKey(d);
+      const day = state.days[key];
+      if(!day || day.items.length===0) continue;
+      shown++;
+      const li = el("li", {});
+      li.appendChild(el("div", {class:"rail-dot"+(day.pushedIn?" active":"")}));
+      li.appendChild(el("div", {class:"rail-day"}, [text(DAY_NAMES[d.getDay()].slice(0,3)+" "+fmtShort(d))]));
+      const count = day.items.length;
+      const label = day.weekday==="lørdag" ? "styrkeøkt" : (day.weekday==="søndag" ? "løpetur" : "flyttet økt");
+      const itemsDiv = el("div", {class:"rail-items"});
+      itemsDiv.appendChild(el("b",{},[text(count+" øvelser")]));
+      itemsDiv.appendChild(text(" · "+label+(day.pushedIn?" (inkl. flyttet)":"")));
+      li.appendChild(itemsDiv);
+      rail.appendChild(li);
+    }
+    if(shown===0){
+      rail.appendChild(el("li",{},[el("div",{class:"rail-items"},[text("Ingenting planlagt de neste ukene.")])]));
+    }
+    wrap.appendChild(rail);
+    return wrap;
+  }
+
+  function render(){
+    const app = document.getElementById("app");
+    app.innerHTML = "";
+
+    app.appendChild(el("div", {class:"eyebrow"}, [text("Din treningsplan")]));
+    app.appendChild(el("h1", {}, [text(DAY_NAMES[startOfDay(new Date()).getDay()]+"s økt")]));
+
+    app.appendChild(renderTodayCard());
+    app.appendChild(renderUpcoming());
+
+    app.appendChild(el("div", {class:"footer-note"}, [text(
+      "Lørdag: 2 runder styrke. Søndag: 4 km løping. Trykk \"Fikk ikke trent\" for å flytte økta til neste dag."
+    )]));
+  }
+
+  load();
+
+  if("serviceWorker" in navigator){
+    window.addEventListener("load", ()=>{
+      navigator.serviceWorker.register("sw.js").catch(()=>{});
+    });
+  }
+})();
+</script>
+</body>
+</html>
