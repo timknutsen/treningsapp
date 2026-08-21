@@ -232,6 +232,32 @@
     border:1.5px solid var(--line); font-size:13.5px; padding:11px;
   }
 
+  /* ---- Timer ---- */
+  .item-amount.tid{
+    border:1px solid var(--accent-dim); color:var(--accent);
+    border-radius:8px; padding:4px 9px; cursor:pointer;
+  }
+  .item.done .item-amount.tid{border-color:var(--line); color:var(--text-dim);}
+  .timer-wrap{padding:2px 0 12px; border-bottom:1px solid var(--line);}
+  .timer-strip{display:flex; align-items:center; gap:7px;}
+  .timer-tid{
+    font-size:27px; font-weight:800; font-variant-numeric:tabular-nums;
+    flex:1; text-align:center; color:var(--accent); letter-spacing:-0.02em;
+  }
+  .timer-wrap.snart .timer-tid{color:var(--skip);}
+  .timer-btn{
+    background:transparent; border:1.5px solid var(--line); color:var(--text-dim);
+    border-radius:9px; padding:8px 11px; font-size:12.5px; font-weight:700;
+    min-width:44px;
+  }
+  .timer-btn.stopp{border-color:var(--skip); color:var(--skip);}
+  .timer-bar{
+    height:3px; background:var(--line); border-radius:2px;
+    overflow:hidden; margin-top:10px;
+  }
+  .timer-bar i{display:block; height:100%; background:var(--accent); border-radius:2px;}
+  .timer-wrap.snart .timer-bar i{background:var(--skip);}
+
   /* ---- Etterslep ---- */
   .overdue{border-color:var(--skip);}
   .overdue-head{
@@ -574,6 +600,7 @@
     const item = day.items.find(i=>i.id===itemId);
     if(!item) return;
     item.done = !item.done;
+    if(timer && timer.dayKey === dayKey && timer.itemId === itemId) stoppTimer(true);
     queuePersist();
     render();
   }
@@ -740,6 +767,144 @@
   function clearPlan(){
     plan = defaultPlan();
     planChanged();
+  }
+
+  /* ---------- Timer ---------- */
+
+  // "60 sek" og "5 min" gir timer. Meter og kilometer gjør det ikke, så
+  // enhetene s og m godtas ikke: "2000 m" er en distanse, ikke to tusen minutter.
+  function parseTid(amount){
+    const m = String(amount||"").match(/(\d+)\s*(sekunder|sekund|sek|minutter|minutt|min)\b/i);
+    if(!m) return null;
+    const n = parseInt(m[1],10);
+    if(!n) return null;
+    const sek = /^min/i.test(m[2]) ? n*60 : n;
+    return (sek > 0 && sek <= 7200) ? sek : null;
+  }
+
+  let timer    = null;   // {dayKey, itemId, total, slutt, pauseRest, sistPip}
+  let timerInt = null;
+  let lydCtx   = null;
+  let wakeLock = null;
+
+  // Lyd må startes fra et trykk, ellers nekter iOS å spille av senere.
+  function pip(ganger, frekvens){
+    try{
+      if(!lydCtx){
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if(!AC) return;
+        lydCtx = new AC();
+      }
+      if(lydCtx.state === "suspended") lydCtx.resume();
+      for(let i=0;i<ganger;i++){
+        const o = lydCtx.createOscillator();
+        const g = lydCtx.createGain();
+        const t = lydCtx.currentTime + i*0.19;
+        o.frequency.value = frekvens;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.32, t+0.012);
+        g.gain.exponentialRampToValueAtTime(0.0001, t+0.16);
+        o.connect(g); g.connect(lydCtx.destination);
+        o.start(t); o.stop(t+0.17);
+      }
+    }catch(e){}
+  }
+
+  async function holdSkjermVaken(){
+    try{
+      if("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen");
+    }catch(e){}
+  }
+  function slippSkjerm(){
+    try{ if(wakeLock){ wakeLock.release(); wakeLock = null; } }catch(e){}
+  }
+  // Skjermlåsen ryker når appen går i bakgrunnen, så den tas på nytt.
+  document.addEventListener("visibilitychange", ()=>{
+    if(document.visibilityState === "visible" && timer && !wakeLock) holdSkjermVaken();
+  });
+
+  function timerIgjen(){
+    if(!timer) return 0;
+    if(timer.pauseRest != null) return Math.ceil(timer.pauseRest/1000);
+    return Math.max(0, Math.ceil((timer.slutt - Date.now())/1000));
+  }
+
+  function fmtTid(sek){
+    const m = Math.floor(sek/60);
+    return m + ":" + (sek%60 < 10 ? "0" : "") + (sek%60);
+  }
+
+  // Visningen slås opp på id hvert tikk: render() kan ha bygd raden på nytt,
+  // så en lagret nodereferanse ville pekt på et element som ikke er i DOM-en.
+  function tikk(){
+    if(!timer) return;
+    const igjen = timerIgjen();
+    const visning = document.getElementById("timer-tid");
+    const bar     = document.getElementById("timer-bar");
+    const wrap    = document.getElementById("timer-wrap");
+    if(visning) visning.textContent = fmtTid(igjen);
+    if(bar) bar.style.width = Math.max(0, (igjen/timer.total)*100) + "%";
+    if(wrap) wrap.classList.toggle("snart", igjen <= 5 && igjen > 0);
+
+    if(timer.pauseRest == null && igjen <= 3 && igjen > 0 && timer.sistPip !== igjen){
+      timer.sistPip = igjen;
+      pip(1, 660);
+    }
+    if(timer.pauseRest == null && igjen === 0) fullforTimer();
+  }
+
+  function startTimer(dayKey, itemId, sek){
+    stoppTimer(true);
+    timer = {dayKey, itemId, total: sek, slutt: Date.now()+sek*1000, pauseRest: null, sistPip: null};
+    pip(1, 880);              // også opplåsing av lyd, siden dette skjer på et trykk
+    holdSkjermVaken();
+    timerInt = setInterval(tikk, 200);
+    render();
+  }
+
+  function stoppTimer(stille){
+    if(timerInt){ clearInterval(timerInt); timerInt = null; }
+    timer = null;
+    slippSkjerm();
+    if(!stille) render();
+  }
+
+  function fullforTimer(){
+    const {dayKey, itemId} = timer;
+    pip(3, 880);
+    const day = state.days[dayKey];
+    const item = day && day.items.find(i=>i.id===itemId);
+    if(item && !item.done){
+      item.done = true;
+      queuePersist();
+    }
+    stoppTimer(true);
+    render();
+  }
+
+  function justerTimer(ms){
+    if(!timer) return;
+    if(timer.pauseRest != null){
+      timer.pauseRest = Math.max(1000, timer.pauseRest + ms);
+    }else{
+      timer.slutt = Math.max(Date.now()+1000, timer.slutt + ms);
+    }
+    timer.total = Math.max(timer.total, timerIgjen());
+    timer.sistPip = null;
+    tikk();
+  }
+
+  function pauseTimer(){
+    if(!timer) return;
+    if(timer.pauseRest != null){
+      timer.slutt = Date.now() + timer.pauseRest;
+      timer.pauseRest = null;
+      holdSkjermVaken();
+    }else{
+      timer.pauseRest = timer.slutt - Date.now();
+      slippSkjerm();
+    }
+    render();
   }
 
   /* ---------- Historikk ---------- */
@@ -918,8 +1083,44 @@
     }
     row.appendChild(check);
     row.appendChild(name);
-    row.appendChild(el("div", {class:"item-amount"}, [text(item.amount)]));
+
+    const sek = parseTid(item.amount);
+    const amount = el("div", {class:"item-amount"+(sek?" tid":"")}, [text(item.amount)]);
+    if(sek) amount.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      startTimer(dayKey, item.id, sek);
+    });
+    row.appendChild(amount);
     return row;
+  }
+
+  function renderTimerStrip(){
+    const igjen = timerIgjen();
+    const pauset = timer.pauseRest != null;
+    const wrap = el("div", {class:"timer-wrap", id:"timer-wrap"});
+
+    const strip = el("div", {class:"timer-strip"});
+    strip.appendChild(el("button", {class:"timer-btn", onclick:()=>justerTimer(-15000)}, [text("−15")]));
+    strip.appendChild(el("div", {class:"timer-tid", id:"timer-tid"}, [text(fmtTid(igjen))]));
+    strip.appendChild(el("button", {class:"timer-btn", onclick:()=>justerTimer(15000)}, [text("+15")]));
+    strip.appendChild(el("button", {class:"timer-btn", onclick:pauseTimer},
+      [text(pauset ? "▶" : "❚❚")]));
+    strip.appendChild(el("button", {class:"timer-btn stopp", onclick:()=>stoppTimer()}, [text("✕")]));
+    wrap.appendChild(strip);
+
+    const bar = el("div", {class:"timer-bar"});
+    bar.appendChild(el("i", {id:"timer-bar", style:"width:"+Math.max(0,(igjen/timer.total)*100)+"%"}));
+    wrap.appendChild(bar);
+    if(igjen <= 5 && igjen > 0) wrap.className += " snart";
+    return wrap;
+  }
+
+  // Raden, og timerstripa under den dersom timeren hører til denne øvelsen.
+  function leggTilOvelse(card, key, item){
+    card.appendChild(renderItemRow(key, item));
+    if(timer && timer.dayKey === key && timer.itemId === item.id){
+      card.appendChild(renderTimerStrip());
+    }
   }
 
   function renderTodayCard(){
@@ -953,16 +1154,16 @@
     if(rounds.length){
       rounds.forEach(r=>{
         card.appendChild(el("div", {class:"round-label"}, [text("Runde "+r)]));
-        egne.filter(i=>i.round===r).forEach(i=>card.appendChild(renderItemRow(key,i)));
+        egne.filter(i=>i.round===r).forEach(i=>leggTilOvelse(card,key,i));
       });
-      egne.filter(i=>!i.round).forEach(i=>card.appendChild(renderItemRow(key,i)));
+      egne.filter(i=>!i.round).forEach(i=>leggTilOvelse(card,key,i));
     }else{
-      egne.forEach(i=>card.appendChild(renderItemRow(key,i)));
+      egne.forEach(i=>leggTilOvelse(card,key,i));
     }
 
     if(flyttet.length){
       card.appendChild(el("div", {class:"round-label"}, [text("Flyttet inn")]));
-      flyttet.forEach(i=>card.appendChild(renderItemRow(key,i)));
+      flyttet.forEach(i=>leggTilOvelse(card,key,i));
     }
 
     if(allDone){

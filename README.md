@@ -14,6 +14,12 @@ for å flytte dagens gjenstående øvelser til neste dag.
   der hver dag er fargelagt etter hvordan den gikk. Trykk på en dag for å se
   hvilke øvelser som ble gjort
 
+Øvelser med tid i seg, som `60 sek` eller `5 min`, får en oransje mengde-brikke.
+Trykk på den for å starte nedtelling rett i raden, med −15 / +15, pause og
+stopp. Timeren piper de tre siste sekundene, huker av øvelsen når den er ferdig,
+og holder skjermen våken mens den går. Reps og distanser (`20 stk`, `4 km`) har
+ingen timer.
+
 Øvelsesbanken dekker bein, overkropp, kjerne og kondisjon. Finner du ikke
 øvelsen, legg den til som egen øvelse nederst i velgeren.
 
