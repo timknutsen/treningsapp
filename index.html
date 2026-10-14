@@ -267,6 +267,37 @@
   }
   .reset:active{transform:scale(.95)}
 
+  /* ---------- Innlogging ---------- */
+  .login-wrap{min-height:calc(100dvh - 120px); display:flex; flex-direction:column; justify-content:center; gap:20px}
+  .login-title{font-size:1.4rem; font-weight:800; text-align:center; letter-spacing:-.02em}
+  .login-sub{color:var(--muted); font-size:.84rem; text-align:center; margin-top:6px}
+  .member-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .member-btn{
+    appearance:none; border:1px solid var(--line); background:var(--card); color:var(--txt);
+    border-radius:16px; padding:20px 10px; font:800 1rem system-ui; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+  }
+  .member-btn:active{transform:scale(.97)}
+  .member-avatar{
+    width:44px; height:44px; border-radius:50%; display:grid; place-items:center;
+    background:linear-gradient(160deg,var(--accent),var(--accent-2)); color:#04121f; font-weight:800;
+  }
+  .pin-dots{display:flex; gap:14px; justify-content:center; margin:6px 0 4px}
+  .pin-dots i{width:14px; height:14px; border-radius:50%; border:2px solid var(--line); display:block}
+  .pin-dots i.filled{background:var(--accent); border-color:var(--accent)}
+  .pin-dots.error i{border-color:var(--miss)}
+  .pin-pad{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; width:100%; max-width:280px; margin:0 auto}
+  .pin-key{
+    appearance:none; border:1px solid var(--line); background:var(--card); color:var(--txt);
+    border-radius:14px; padding:16px 0; font:800 1.2rem system-ui; cursor:pointer;
+  }
+  .pin-key:active{transform:scale(.95)}
+  .pin-back{text-align:center; color:var(--muted); font-size:.82rem; background:none; border:none; cursor:pointer; padding:8px}
+  .head-right{display:flex; align-items:center; gap:10px}
+  .who{appearance:none; background:none; border:none; padding:0; cursor:pointer}
+  .who .member-avatar{width:34px; height:34px; font-size:.8rem}
+  .who:active{transform:scale(.94)}
+
   /* Si fra */
   .fb-body{padding-top:16px}
   .fb-choices{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px}
@@ -639,8 +670,14 @@
 
   /* ---------- Lagring ---------- */
 
-  const PLAN_KEY    = "workout-plan-v2";
-  const STORAGE_KEY = "workout-schedule-v2";
+  // Lokal kopi per medlem. De gamle nøklene uten medlems-id overtas av den
+  // første (ikke-admin) som logger inn på enheten.
+  const LEGACY_PLAN_KEY  = "workout-plan-v2";
+  const LEGACY_STATE_KEY = "workout-schedule-v2";
+  const LEGACY_CLAIMED_KEY = "treningsplan.legacyClaimed.v1";
+  const MEMBER_KEY  = "treningsplan.member.v1";
+  const planKey  = () => LEGACY_PLAN_KEY + "." + member.id;
+  const stateKey = () => LEGACY_STATE_KEY + "." + member.id;
   const SOUND_KEY   = "treningsplan.lyd.v1";
   const FEEDBACK_QUEUE_KEY = "treningsplan.tilbakemelding.v1";
   const GYM_SEED_KEY = "treningsplan.senterprogram.v1";
@@ -652,6 +689,7 @@
   const WINDOW_DAYS = 60;
   const MAX_ROUNDS  = 6;
 
+  let member = null;  // {id, name, isAdmin}
   let plan  = null;  // { days: { <ukedag 0-6>: {label, rounds, exercises:[{exId,name,amount}]} } }
   let state = null;  // { days: { "yyyy-mm-dd": {weekday,label,items,pushedIn,skipped} } }
   let view  = "trening";
@@ -670,9 +708,13 @@
   function loadPlan(){
     let p = null;
     try{
-      const raw = localStorage.getItem(PLAN_KEY);
+      const raw = localStorage.getItem(planKey());
       if(raw) p = JSON.parse(raw);
     }catch(e){ p = null; }
+    return normalizePlan(p);
+  }
+
+  function normalizePlan(p){
     if(!p || !p.days) p = defaultPlan();
     for(let wd=0; wd<7; wd++){
       const d = p.days[wd];
@@ -684,19 +726,154 @@
   }
 
   function persistPlan(){
-    try{ localStorage.setItem(PLAN_KEY, JSON.stringify(plan)); }
+    try{ localStorage.setItem(planKey(), JSON.stringify(plan)); }
     catch(e){ console.error("Kunne ikke lagre planen:", e); }
+    scheduleCloud();
   }
   function persist(){
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    try{ localStorage.setItem(stateKey(), JSON.stringify(state)); }
     catch(e){ console.error("Kunne ikke lagre lokalt:", e); }
+    scheduleCloud();
   }
   function queuePersist(){
     if(saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(persist, 150);
   }
   // Lagre med en gang hvis appen lukkes rett etter en avhuking.
-  window.addEventListener("pagehide", ()=>{ if(saveTimer){ clearTimeout(saveTimer); persist(); } });
+  window.addEventListener("pagehide", ()=>{
+    if(!member) return;
+    if(saveTimer){ clearTimeout(saveTimer); persist(); }
+    pushCloud();
+  });
+
+  /* ---------- Supabase ---------- */
+
+  function rest(path, opts){
+    opts = opts || {};
+    const method = opts.method || "GET";
+    const body = opts.body ? JSON.stringify(opts.body) : undefined;
+    const ctrl = window.AbortController ? new AbortController() : null;
+    const tm = ctrl ? setTimeout(()=>ctrl.abort(), 10000) : null;
+    return fetch(SUPABASE_URL + "/rest/v1/" + path, {
+      method,
+      headers: Object.assign({
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY,
+        "Content-Type": "application/json"
+      }, opts.headers || {}),
+      body,
+      // keepalive lar lagringen bli ferdig selv om appen lukkes, men tåler maks 64 kB.
+      keepalive: method !== "GET" && !!body && body.length < 60000,
+      signal: ctrl ? ctrl.signal : undefined
+    }).then(res=>{
+      if(tm) clearTimeout(tm);
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      return method === "GET" ? res.json() : null;
+    }, err=>{ if(tm) clearTimeout(tm); throw err; });
+  }
+
+  /* ---------- Synk med skyen ----------
+     Planen har updatedAt, og hver dag som er endret i appen har t (ms).
+     Ved sammenslåing vinner den nyeste, og databasen nekter å la en eldre
+     versjon overskrive en nyere. Urørte dager lagres ikke: de bygges fra planen. */
+
+  let cloudReady = false;   // skyen er lest minst én gang, så vi kan trygt skrive
+  let planDirty  = false;
+  const dirtyDays = new Set();
+  let cloudTimer = null;
+  let lastPull   = 0;
+
+  function touch(key){
+    const d = state.days[key];
+    if(!d) return;
+    d.t = Date.now();
+    dirtyDays.add(key);
+  }
+
+  function scheduleCloud(){
+    if(!cloudReady) return;
+    if(cloudTimer) clearTimeout(cloudTimer);
+    cloudTimer = setTimeout(pushCloud, 1200);
+  }
+
+  const UPSERT = {Prefer: "resolution=merge-duplicates,return=minimal"};
+
+  function pushCloud(){
+    if(cloudTimer){ clearTimeout(cloudTimer); cloudTimer = null; }
+    if(!cloudReady || !member) return Promise.resolve();
+    const jobs = [];
+    if(planDirty){
+      planDirty = false;
+      jobs.push(rest("training_plans", {method:"POST", headers:UPSERT,
+        body:{member_id: member.id, plan, updated_at: plan.updatedAt || 0}})
+        .catch(e=>{ planDirty = true; throw e; }));
+    }
+    const keys = Array.from(dirtyDays).filter(k => state.days[k]);
+    dirtyDays.clear();
+    if(keys.length){
+      const rows = keys.map(k => ({member_id: member.id, day: k, data: state.days[k], t: state.days[k].t || 0}));
+      jobs.push(rest("training_days", {method:"POST", headers:UPSERT, body:rows})
+        .catch(e=>{ keys.forEach(k => dirtyDays.add(k)); throw e; }));
+    }
+    return Promise.all(jobs).catch(()=>{ /* prøver igjen ved neste endring eller når nettet er tilbake */ });
+  }
+
+  function pullCloud(){
+    const id = encodeURIComponent(member.id);
+    return Promise.all([
+      rest("training_plans?select=plan,updated_at&member_id=eq." + id),
+      rest("training_days?select=day,data,t&member_id=eq." + id)
+    ]).then(([plans, days])=>{
+      lastPull = Date.now();
+      const cp = plans[0];
+      const lokal = plan.updatedAt || 0;
+      if(cp && cp.plan && cp.plan.days && (cp.updated_at || 0) > lokal){
+        plan = normalizePlan(cp.plan);
+      }else if(!cp || lokal > (cp.updated_at || 0)){
+        planDirty = true;
+      }
+
+      const skyT = {};
+      days.forEach(r=>{
+        skyT[r.day] = r.t || 0;
+        const her = state.days[r.day];
+        if(r.data && Array.isArray(r.data.items) && (!her || (r.t || 0) > (her.t || 0))){
+          state.days[r.day] = r.data;
+        }
+      });
+      // Det som er nyere her (eller aldri har vært oppe), sendes.
+      Object.keys(state.days).forEach(k=>{
+        const d = state.days[k];
+        if(!d.t && isUntouched(d)) return;
+        if(!d.t) d.t = 1;   // fra før synk fantes: taper mot alt som er endret i skyen
+        if(!(k in skyT) || d.t > skyT[k]) dirtyDays.add(k);
+      });
+      cloudReady = true;
+    });
+  }
+
+  // Leser skyen, slår sammen og skriver tilbake det som er nyere her.
+  function syncCloud(){
+    if(!member || !navigator.onLine) return Promise.resolve();
+    return pullCloud().then(()=>{
+      seedGymProgram();
+      syncWindow(state);
+      try{
+        localStorage.setItem(planKey(), JSON.stringify(plan));
+        localStorage.setItem(stateKey(), JSON.stringify(state));
+      }catch(e){}
+      render();
+      return pushCloud();
+    }).catch(()=>{ /* uten nett: appen går videre på den lokale kopien */ });
+  }
+
+  window.addEventListener("online", ()=>{ syncCloud(); });
+  document.addEventListener("visibilitychange", ()=>{
+    if(!member) return;
+    if(document.visibilityState === "hidden"){ pushCloud(); return; }
+    // Henter endringer fra andre enheter, men ikke oftere enn hvert halve minutt.
+    if(Date.now() - lastPull > 30000) syncCloud();
+  });
 
   /* ---------- Bygge dager fra planen ---------- */
 
@@ -740,7 +917,8 @@
       if(!existing){
         if(def) st.days[key] = def;
       }else if(isUntouched(existing)){
-        if(def) st.days[key] = def;
+        // Tidsstempelet blir med, ellers kunne en eldre versjon i skyen vinne.
+        if(def){ if(existing.t) def.t = existing.t; st.days[key] = def; }
         else delete st.days[key];
       }
     }
@@ -748,25 +926,52 @@
   }
 
   function planChanged(){
+    plan.updatedAt = Date.now();
+    planDirty = true;
     persistPlan();
     syncWindow(state);
     queuePersist();
     render();
   }
 
+  // Data fra før kontoene kom, lå under nøkler uten medlems-id. Den første
+  // som ikke er admin overtar dem på denne enheten.
+  function claimLegacyData(){
+    if(member.isAdmin) return;
+    try{
+      if(localStorage.getItem(LEGACY_CLAIMED_KEY)) return;
+      const oldPlan  = localStorage.getItem(LEGACY_PLAN_KEY);
+      const oldState = localStorage.getItem(LEGACY_STATE_KEY);
+      if(!oldPlan && !oldState) return;
+      if(oldPlan && !localStorage.getItem(planKey())){
+        const p = JSON.parse(oldPlan);
+        // Overtakelsen er nyere enn noe som kan ligge i skyen for denne kontoen.
+        p.updatedAt = Date.now();
+        if(localStorage.getItem(GYM_SEED_KEY)) p.gymSeeded = true;
+        localStorage.setItem(planKey(), JSON.stringify(p));
+      }
+      if(oldState && !localStorage.getItem(stateKey())) localStorage.setItem(stateKey(), oldState);
+      localStorage.setItem(LEGACY_CLAIMED_KEY, member.id);
+    }catch(e){ /* ingenting å overta */ }
+  }
+
   function load(){
     LEGACY_KEYS.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+    claimLegacyData();
     plan = loadPlan();
-    seedGymProgram();
     try{
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(stateKey());
       if(raw) state = JSON.parse(raw);
     }catch(e){ state = null; }
     if(!state || !state.days) state = {days:{}};
     syncWindow(state);
-    persistPlan();
-    persist();
+    try{
+      localStorage.setItem(planKey(), JSON.stringify(plan));
+      localStorage.setItem(stateKey(), JSON.stringify(state));
+    }catch(e){}
     render();
+    // Skyen leses før noe skrives dit, så en ny enhet aldri blanker ut framgang.
+    syncCloud();
   }
 
   /* ---------- Status for dager og uke ---------- */
@@ -868,6 +1073,7 @@
     if(!item) return;
     const varFerdig = isComplete(dayKey);
     item.done = !item.done;
+    touch(dayKey);
     if(timer && timer.dayKey === dayKey && timer.itemId === itemId) stoppTimer(true);
     buzz(item.done ? [12,40,18] : 8);
     queuePersist();
@@ -904,6 +1110,8 @@
     }
     state.days[nextKey].items = state.days[nextKey].items.concat(carryItems(unfinished, fromKey));
     state.days[nextKey].pushedIn = true;
+    touch(fromKey);
+    touch(nextKey);
 
     syncWindow(state);
     queuePersist();
@@ -929,12 +1137,13 @@
 
   /* ---------- Handlinger på planen ---------- */
 
-  // Programmet fra treningssenteret legges inn på mandag og torsdag én gang.
-  // Det som allerede står på dagene blir liggende, og fjernes programmet
-  // senere, kommer det ikke tilbake.
+  // Programmet fra treningssenteret legges inn på mandag og torsdag én gang
+  // per konto (flagget ligger i planen og følger med til skyen). Det som
+  // allerede står på dagene blir liggende, og fjernes programmet senere,
+  // kommer det ikke tilbake. Admin får det ikke, og det skjer først når skyen
+  // er lest, så en ny enhet ikke legger det oppå en plan som finnes fra før.
   function seedGymProgram(){
-    try{ if(localStorage.getItem(GYM_SEED_KEY)) return; }
-    catch(e){ return; }   // uten lagring ville det blitt lagt inn på nytt hver gang
+    if(!cloudReady || member.isAdmin || plan.gymSeeded) return;
     const program = EXERCISE_BANK.filter(ex => ex.group === "Treningssenter");
     GYM_DAYS.forEach(wd=>{
       const day = planDay(wd);
@@ -944,7 +1153,9 @@
       });
       if(!day.label) day.label = "Treningssenter";
     });
-    try{ localStorage.setItem(GYM_SEED_KEY, "1"); }catch(e){}
+    plan.gymSeeded = true;
+    plan.updatedAt = Date.now();
+    planDirty = true;
   }
 
   function planDay(wd){
@@ -1069,6 +1280,7 @@
     if(item && !item.done){
       const varFerdig = isComplete(dayKey);
       item.done = true;
+      touch(dayKey);
       queuePersist();
       afterChange(dayKey, varFerdig, "check");
     }else{
@@ -1515,7 +1727,13 @@
         el("h1", {class:"title"}, ["Trening"]),
         el("div", {class:"sub"}, ["Uke " + isoWeekNo(today) + " · " + lower(DAY_NAMES[today.getDay()])])
       ]),
-      ringEl(w.complete, w.planned)
+      el("div", {class:"head-right"}, [
+        el("button", {type:"button", class:"who", onclick:logOut,
+          "aria-label":"Logget inn som " + member.name + ". Trykk for å logge ut."}, [
+          el("span", {class:"member-avatar"}, [initials(member.name)])
+        ]),
+        ringEl(w.complete, w.planned)
+      ])
     ]));
     app.appendChild(renderStreakCard(w));
     app.appendChild(renderPanel(w));
@@ -1532,7 +1750,7 @@
       }
     }, [soundOn ? "🔊" : "🔇"]);
     app.appendChild(el("footer", {}, [
-      el("span", {}, [st.best > 0 ? "Rekord: " + st.best + " på rad · " + st.okter + " økter totalt" : "Huk av øvelsene etter hvert som du gjør dem"]),
+      el("span", {}, [st.best > 0 ? "Rekord: " + st.best + " på rad · " + st.okter + (st.okter === 1 ? " økt" : " økter") + " totalt" : "Huk av øvelsene etter hvert som du gjør dem"]),
       el("span", {style:"display:flex; gap:8px; flex:0 0 auto"}, [
         el("button", {type:"button", class:"reset", onclick:openFeedback}, ["💬 Si fra"]),
         soundBtn
@@ -1545,16 +1763,7 @@
   // Meldingene havner i feedback-tabellen i Supabase, og vises i Admin-fanen
   // i Ukeoppgaver. Uten nett legges de i kø og sendes neste gang appen er på nett.
   function sendFeedback(m){
-    return fetch(SUPABASE_URL + "/rest/v1/feedback", {
-      method: "POST",
-      headers: {
-        "apikey": SUPABASE_KEY,
-        "Authorization": "Bearer " + SUPABASE_KEY,
-        "Content-Type": "application/json",
-        "Prefer": "return=minimal"
-      },
-      body: JSON.stringify(m)
-    }).then(res => { if(!res.ok) throw new Error("HTTP " + res.status); });
+    return rest("feedback", {method:"POST", headers:{Prefer:"return=minimal"}, body:m});
   }
 
   function readQueue(){
@@ -1631,7 +1840,7 @@
         app: "trening",
         kind,
         message: message.slice(0, 2000),
-        context: ("fane: " + view + " · " + navigator.userAgent).slice(0, 500),
+        context: ("fra: " + (member ? member.name : "?") + " · fane: " + view + " · " + navigator.userAgent).slice(0, 500),
         created_at: new Date().toISOString()
       };
       // Køen først: da er meldingen trygg selv om appen lukkes mens den sendes.
@@ -1983,16 +2192,131 @@
   });
 
   document.addEventListener("visibilitychange", ()=>{
-    if(document.visibilityState !== "visible") return;
+    if(!member || document.visibilityState !== "visible") return;
     // Skjermlåsen ryker når appen går i bakgrunnen, så den tas på nytt.
     if(timer && !wakeLock && timer.pauseRest == null) holdSkjermVaken();
     if(timer) tikk();
     if(dateKey(startOfDay(new Date())) !== todayKey) render();
   });
 
-  load();
-  flushFeedback();
+  /* ---------- Innlogging ----------
+     Samme familiemedlemmer og PIN som i Ukeoppgaver (members-tabellen).
+     PIN-en er en enkel sperre mellom søsken, ikke ekte tilgangskontroll. */
+
+  let members = [];
+  let picked  = null;
+  let pinBuf  = "";
+  let pinFeil = false;
+
+  function initials(name){
+    return String(name || "?").trim().split(/\s+/).slice(0,2).map(w => w[0].toUpperCase()).join("");
+  }
+
+  function renderLogin(melding){
+    document.querySelector(".tabbar").hidden = true;
+    const app  = document.getElementById("app");
+    const wrap = el("div", {class:"login-wrap"});
+    app.innerHTML = "";
+
+    if(!picked){
+      wrap.appendChild(el("div", {}, [
+        el("div", {class:"login-title"}, ["Hvem er du?"]),
+        el("div", {class:"login-sub"}, ["Samme navn og PIN som i Ukeoppgaver"])
+      ]));
+      if(melding){
+        wrap.appendChild(el("div", {class:"empty"}, [el("span", {class:"big"}, ["📡"]), melding]));
+        wrap.appendChild(el("button", {type:"button", class:"cta", onclick:boot}, ["Prøv igjen"]));
+      }else if(!members.length){
+        wrap.appendChild(el("div", {class:"empty"}, ["Henter…"]));
+      }else{
+        const grid = el("div", {class:"member-grid"});
+        members.forEach(m=>{
+          grid.appendChild(el("button", {type:"button", class:"member-btn", onclick:()=>{
+            picked = m; pinBuf = ""; pinFeil = false; buzz(8); renderLogin();
+          }}, [el("span", {class:"member-avatar"}, [initials(m.name)]), el("span", {}, [m.name])]));
+        });
+        wrap.appendChild(grid);
+      }
+    }else{
+      wrap.appendChild(el("div", {class:"login-title"}, ["Hei " + picked.name + " – PIN-kode"]));
+      const dots = el("div", {class:"pin-dots" + (pinFeil ? " error" : ""), "aria-label": pinBuf.length + " av 4 sifre"});
+      for(let i=0;i<4;i++) dots.appendChild(el("i", {class: i < pinBuf.length ? "filled" : ""}));
+      wrap.appendChild(dots);
+      const pad = el("div", {class:"pin-pad"});
+      ["1","2","3","4","5","6","7","8","9","","0","⌫"].forEach(k=>{
+        if(k === ""){ pad.appendChild(el("span")); return; }
+        pad.appendChild(el("button", {type:"button", class:"pin-key", "aria-label": k === "⌫" ? "Slett" : k,
+          onclick:()=>tastPin(k)}, [k]));
+      });
+      wrap.appendChild(pad);
+      wrap.appendChild(el("button", {type:"button", class:"pin-back", onclick:()=>{
+        picked = null; pinBuf = ""; renderLogin();
+      }}, ["‹ Bytt person"]));
+    }
+    app.appendChild(wrap);
+  }
+
+  function tastPin(k){
+    pinFeil = false;
+    if(k === "⌫") pinBuf = pinBuf.slice(0,-1);
+    else if(pinBuf.length < 4){ pinBuf += k; buzz(8); }
+    if(pinBuf.length === 4){
+      if(pinBuf === String(picked.pin)){
+        buzz([12,40,18]);
+        logIn(picked);
+        return;
+      }
+      pinFeil = true;
+      buzz([60,40,60]);
+      setTimeout(()=>{ pinBuf = ""; pinFeil = false; if(!member) renderLogin(); }, 260);
+    }
+    renderLogin();
+  }
+
+  function logIn(m){
+    try{ localStorage.setItem(MEMBER_KEY, JSON.stringify({id:m.id, name:m.name, isAdmin:!!m.isAdmin})); }catch(e){}
+    enter(m);
+  }
+
+  function enter(m){
+    member = {id:m.id, name:m.name, isAdmin:!!m.isAdmin};
+    picked = null; pinBuf = "";
+    document.querySelector(".tabbar").hidden = false;
+    view = "trening";
+    load();
+    flushFeedback();
+  }
+
+  function logOut(){
+    if(!confirm("Logge ut " + member.name + " og bytte person?")) return;
+    if(saveTimer){ clearTimeout(saveTimer); persist(); }
+    const ut = ()=>{ try{ localStorage.removeItem(MEMBER_KEY); }catch(e){} location.reload(); };
+    pushCloud().then(ut, ut);
+  }
+
+  // Den som har logget inn før, kommer rett inn, også uten nett. Lista med
+  // medlemmer hentes i bakgrunnen for å se at kontoen fortsatt finnes.
+  function boot(){
+    let saved = null;
+    try{ saved = JSON.parse(localStorage.getItem(MEMBER_KEY) || "null"); }catch(e){}
+    if(saved && saved.id && !member) enter(saved);
+    else if(!member) renderLogin();
+
+    rest("members?select=id,name,pin,is_admin,member_order&order=member_order").then(rows=>{
+      members = (rows || []).map(r => ({id:r.id, name:r.name, pin:r.pin, isAdmin:!!r.is_admin}));
+      if(member){
+        const m = members.find(x => x.id === member.id);
+        if(!m){ try{ localStorage.removeItem(MEMBER_KEY); }catch(e){} location.reload(); }
+        return;
+      }
+      renderLogin(members.length ? null : "Ingen familiemedlemmer er lagt inn ennå.");
+    }).catch(()=>{
+      if(!member) renderLogin("Får ikke kontakt. Sjekk at du er på nett, og prøv igjen.");
+    });
+  }
+
   window.addEventListener("online", flushFeedback);
+  boot();
 
   if("serviceWorker" in navigator){
     window.addEventListener("load", ()=>{
