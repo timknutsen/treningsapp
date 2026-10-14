@@ -20,6 +20,13 @@ Når alle øvelsene for en dag er huket av, kommer et feiringsark med konfetti
 og rekka di. Er alle ukas økter gjort, blir hele stripa en skimrende stolpe,
 stjerna på søndag fylles, og feiringen blir «Perfekt uke!».
 
+Øvelsesbanken har også en gruppe **Treningssenter** med apparatprogrammet
+fra treningssenteret (leg press, pull down, chest press, leg extension,
+midjerotasjon, seated row og back extension), med apparatnummer, 3×15 og
+startvekt. «Legg til hele programmet» legger alle sju inn på valgt dag med
+ett trykk. Etter 10 ganger kan vekta økes. Det gjøres ved å endre mengden i
+Plan.
+
 Øvelser med tid i seg, som `60 sek` eller `5 min`, får en blå ▶-brikke.
 Trykk på den for å starte nedtelling under øvelsen, med −15 / +15, pause og
 stopp. Timeren piper de tre siste sekundene, huker av øvelsen når den er
