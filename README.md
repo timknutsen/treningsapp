@@ -37,8 +37,20 @@ modus på telefonen, og animasjoner slås av under `prefers-reduced-motion`.
 Endringer i planen slår inn på kommende dager med det samme. Dager du allerede
 har huket av på, hoppet over, eller flyttet øvelser til, blir stående urørt.
 
+## Si fra om feil og forslag
+
+Knappen «💬 Si fra» nederst på Trening-fanen lar deg velge «Noe er feil»
+eller «Jeg har en idé» og skrive en melding. Meldingen lagres i tabellen
+`feedback` i det samme Supabase-prosjektet som Ukeoppgaver bruker, og dukker
+opp i Admin-fanen i Ukeoppgaver. Der kan den merkes som ferdig.
+
+Uten nett legges meldingen i kø i `localStorage`
+(`treningsplan.tilbakemelding.v1`) og sendes neste gang appen åpnes på nett.
+Med meldingen følger hvilken fane som var åpen og nettleserinfo, så feil er
+lettere å finne.
+
 ## Filer
-- `index.html` — selve appen (bruker localStorage, ingen backend nødvendig)
+- `index.html` — selve appen (bruker localStorage; Supabase bare for «Si fra»)
 - `manifest.json` — gjør appen installerbar på hjemskjermen
 - `sw.js` — service worker for offline-bruk
 - `icon-192.png` / `icon-512.png` — app-ikoner
