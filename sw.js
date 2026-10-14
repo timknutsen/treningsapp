@@ -1,4 +1,4 @@
-const CACHE_NAME = "treningsplan-v9";
+const CACHE_NAME = "treningsplan-v10";
 const PRECACHE = [
   "./",
   "./index.html",

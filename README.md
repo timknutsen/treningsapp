@@ -39,7 +39,23 @@ ferdig, og holder skjermen våken mens den går. Reps og distanser (`20 stk`,
 
 Fikk du ikke trent, kan du trykke «Flytt resten til i morgen» under dagens
 økt. Rekka teller fullførte økter etter hverandre: hviledager bryter den
-ikke, og dagens økt teller først når den er huket av.
+ikke, og dagens økt teller først når den er huket av. En dag som er flyttet,
+vises med ↪. Den bryter verken rekka eller perfekt uke så lenge det som ble
+flyttet blir gjort (eller fortsatt venter på i dag eller senere). Blir det
+aldri gjort, teller dagen som hoppet over.
+
+## Mer vekt
+
+Treningssenteret sier at vekta kan økes etter 10 ganger. For øvelser med kg i
+mengden teller appen hvor mange dager øvelsen er gjort på vekta som står i
+planen, og viser «7/10 før mer vekt» under øvelsen. Når den 10. gangen hukes
+av, kommer «Klar for mer vekt!» med et forslag (omtrent +10 %, minst +1 kg)
+som kan justeres med − og +. «Øk» endrer vekta på alle dagene i planen der
+øvelsen står, og tellingen starter på nytt. «Ikke nå» lar planen stå; da
+ligger en «⬆️ Klar for mer vekt»-knapp under øvelsen til du er klar.
+Logg-fanen har et «💪 Vekter»-kort med vekthistorikk (for eksempel
+18 → 20 kg) og framgangen mot neste økning. Historikken lagres i planen og
+synkes med skyen.
 
 Avhuking gir et lite «pling», og fullført økt gir en fanfare. Høyttaleren
 nederst skrur lyden av og på (`treningsplan.lyd.v1`). Appen følger mørk/lys
