@@ -643,6 +643,8 @@
   const STORAGE_KEY = "workout-schedule-v2";
   const SOUND_KEY   = "treningsplan.lyd.v1";
   const FEEDBACK_QUEUE_KEY = "treningsplan.tilbakemelding.v1";
+  const GYM_SEED_KEY = "treningsplan.senterprogram.v1";
+  const GYM_DAYS = [1,4];   // mandag og torsdag
   // Samme Supabase-prosjekt og offentlige nøkkel som Ukeoppgaver.
   const SUPABASE_URL = "https://xishtaqioetncnczznuv.supabase.co";
   const SUPABASE_KEY = "sb_publishable_uH-lmVlIlxiW-GQeXEH-3A_gIUEV_vW";
@@ -755,6 +757,7 @@
   function load(){
     LEGACY_KEYS.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
     plan = loadPlan();
+    seedGymProgram();
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
       if(raw) state = JSON.parse(raw);
@@ -925,6 +928,24 @@
   }
 
   /* ---------- Handlinger på planen ---------- */
+
+  // Programmet fra treningssenteret legges inn på mandag og torsdag én gang.
+  // Det som allerede står på dagene blir liggende, og fjernes programmet
+  // senere, kommer det ikke tilbake.
+  function seedGymProgram(){
+    try{ if(localStorage.getItem(GYM_SEED_KEY)) return; }
+    catch(e){ return; }   // uten lagring ville det blitt lagt inn på nytt hver gang
+    const program = EXERCISE_BANK.filter(ex => ex.group === "Treningssenter");
+    GYM_DAYS.forEach(wd=>{
+      const day = planDay(wd);
+      const har = new Set(day.exercises.map(e => e.exId));
+      program.forEach(ex=>{
+        if(!har.has(ex.id)) day.exercises.push({exId: ex.id, amount: ex.amount});
+      });
+      if(!day.label) day.label = "Treningssenter";
+    });
+    try{ localStorage.setItem(GYM_SEED_KEY, "1"); }catch(e){}
+  }
 
   function planDay(wd){
     if(!plan.days[wd]) plan.days[wd] = {label:"", rounds:1, exercises:[]};

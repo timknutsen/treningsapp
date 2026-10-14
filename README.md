@@ -2,7 +2,8 @@
 
 Enkel PWA-treningsplan for mobil, i samme stil som Ukeoppgaver-appen:
 ukestripe med flamme, store avkrysningskort, faner nederst, lyd og feiring.
-Appen starter tom: du bygger uka selv fra en øvelsesbank.
+Uka bygges fra en øvelsesbank. Første gang appen åpnes, ligger
+apparatprogrammet fra treningssenteret inne på mandag og torsdag.
 
 ## Bruk
 - **Trening** — øverst teller flammen hvor mange økter du har fullført på
@@ -24,7 +25,10 @@ stjerna på søndag fylles, og feiringen blir «Perfekt uke!».
 fra treningssenteret (leg press, pull down, chest press, leg extension,
 midjerotasjon, seated row og back extension), med apparatnummer, 3×15 og
 startvekt. «Legg til hele programmet» legger alle sju inn på valgt dag med
-ett trykk. Etter 10 ganger kan vekta økes. Det gjøres ved å endre mengden i
+ett trykk. Programmet legges også automatisk inn på mandag og torsdag én
+gang (`treningsplan.senterprogram.v1`). Øvelser som alt står på de dagene
+blir liggende, og fjernes programmet, kommer det ikke tilbake.
+Etter 10 ganger kan vekta økes. Det gjøres ved å endre mengden i
 Plan.
 
 Øvelser med tid i seg, som `60 sek` eller `5 min`, får en blå ▶-brikke.
