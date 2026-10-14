@@ -301,6 +301,19 @@
   .who .member-avatar{width:34px; height:34px; font-size:.8rem}
   .who:active{transform:scale(.94)}
 
+  /* Sett */
+  li.task{flex-wrap:wrap}
+  .sets{display:flex; flex-wrap:wrap; gap:8px; flex-basis:100%; margin:-2px 0 0 calc(28px + 13px + 1.35rem + 13px)}
+  .set{
+    appearance:none; width:30px; height:30px; border-radius:50%; padding:0; cursor:pointer;
+    display:grid; place-items:center; font:800 .78rem system-ui; font-variant-numeric:tabular-nums;
+    background:var(--card); color:var(--muted); border:2px solid var(--line);
+    transition:background .15s, border-color .15s, color .15s, transform .1s;
+  }
+  button.set:active{transform:scale(.9)}
+  .set.on{background:var(--done); border-color:var(--done); color:#04121f}
+  li.task.done .set.on{opacity:.75}
+
   /* Mer vekt */
   .lvl-chip{
     appearance:none; display:inline-block; margin-top:6px; cursor:pointer;
@@ -927,7 +940,29 @@
   function isUntouched(day){
     if(!day) return true;
     if(day.pushedIn || day.skipped) return false;
-    return !day.items.some(i => i.done || i.pushedFrom);
+    return !day.items.some(i => i.done || i.pushedFrom || setsStarted(i));
+  }
+
+  /* ---------- Sett ----------
+     Mengder som "3×15 · 18 kg" eller "6 × 400 m" har sett. Hvert sett hukes av
+     for seg (item.sets), og øvelsen er gjort når alle settene er gjort. Øvelser
+     uten sett, og lagrede øvelser fra før, bruker bare item.done som før. */
+  const MAX_SETS = 10;
+  function setCount(amount){
+    const m = String(amount || "").match(/^\s*(\d+)\s*[×x]\s*\d/i);
+    const n = m ? parseInt(m[1], 10) : 0;
+    return (n >= 2 && n <= MAX_SETS) ? n : 0;
+  }
+  // Settene som en liste med riktig lengde. Mangler den, følger den item.done.
+  function itemSets(item){
+    const n = setCount(item.amount);
+    if(!n) return null;
+    const s = Array.isArray(item.sets) ? item.sets.slice(0, n) : [];
+    while(s.length < n) s.push(!!item.done);
+    return s;
+  }
+  function setsStarted(item){
+    return Array.isArray(item.sets) && item.sets.some(Boolean);
   }
 
   // Vinduet starter på mandag i inneværende uke, ikke i dag: dager bak i uka
@@ -1273,11 +1308,31 @@
     if(!item) return;
     const varFerdig = isComplete(dayKey);
     item.done = !item.done;
+    // Trykk på hele raden huker av, eller fjerner, alle settene.
+    if(setCount(item.amount)) item.sets = itemSets(item).map(()=>item.done);
     touch(dayKey);
     if(timer && timer.dayKey === dayKey && timer.itemId === itemId) stoppTimer(true);
     buzz(item.done ? [12,40,18] : 8);
     queuePersist();
     afterChange(dayKey, varFerdig, item.done ? "check" : "uncheck", item.done ? levelUpFor(item) : null);
+  }
+
+  function toggleSet(dayKey, itemId, idx){
+    const day  = state.days[dayKey];
+    const item = day && day.items.find(i=>i.id===itemId);
+    if(!item) return;
+    const sets = itemSets(item);
+    if(!sets || idx >= sets.length) return;
+    const varFerdig = isComplete(dayKey);
+    const varGjort  = !!item.done;
+    sets[idx] = !sets[idx];
+    item.sets = sets;
+    item.done = sets.every(Boolean);
+    touch(dayKey);
+    buzz(sets[idx] ? 12 : 8);
+    queuePersist();
+    const nyttGjort = item.done && !varGjort;
+    afterChange(dayKey, varFerdig, sets[idx] ? "check" : "uncheck", nyttGjort ? levelUpFor(item) : null);
   }
 
   // Ble dagen nettopp fullført, feires det. Ellers bare en liten lyd.
@@ -1481,10 +1536,19 @@
     const item = day && day.items.find(i=>i.id===itemId);
     if(item && !item.done){
       const varFerdig = isComplete(dayKey);
-      item.done = true;
+      // Med sett (f.eks. "3×60 sek") huker timeren av neste sett, ikke hele øvelsen.
+      const sets = itemSets(item);
+      if(sets){
+        const neste = sets.indexOf(false);
+        if(neste >= 0) sets[neste] = true;
+        item.sets = sets;
+        item.done = sets.every(Boolean);
+      }else{
+        item.done = true;
+      }
       touch(dayKey);
       queuePersist();
-      afterChange(dayKey, varFerdig, "check", levelUpFor(item));
+      afterChange(dayKey, varFerdig, "check", item.done ? levelUpFor(item) : null);
     }else{
       render();
     }
@@ -1525,10 +1589,11 @@
     if(key > tKey) return "planlagt";
 
     const done = day.items.filter(i=>i.done).length;
+    const startet = done > 0 || day.items.some(setsStarted);
     if(day.skipped) return "delvis";
     if(done === day.items.length) return "fullfort";
-    if(key === tKey) return done > 0 ? "pagar" : "idag";
-    return done > 0 ? "delvis" : "ikke";
+    if(key === tKey) return startet ? "pagar" : "idag";
+    return startet ? "delvis" : "ikke";
   }
 
   // Hviledager bryter ikke rekka, de hoppes over. Dagens økt teller ikke mot
@@ -1707,7 +1772,7 @@
     if(t.has && !t.complete){
       const igjen = t.day.items.filter(i=>!i.done).length;
       if(igjen === 1) return "Bare <b>én øvelse</b> igjen i dag!";
-      if(igjen === t.day.items.length) return "Dagens økt venter: <b>" + exerciseCount(igjen) + "</b>";
+      if(igjen === t.day.items.length && !t.day.items.some(setsStarted)) return "Dagens økt venter: <b>" + exerciseCount(igjen) + "</b>";
       return "<b>" + exerciseCount(igjen) + "</b> igjen i dag. Stå på!";
     }
     const igjenUke = w.days.filter(x=>x.future && x.has).length;
@@ -1825,6 +1890,19 @@
       label.appendChild(el("button", {type:"button", class:"lvl-chip",
         onclick:(e)=>{ e.stopPropagation(); showLevelUp(prog); }}, ["⬆️ Klar for mer vekt"]));
     }
+    // Settene får sin egen linje under raden, så de ikke presses av mengden.
+    const sets = itemSets(item);
+    let setsRow = null;
+    if(sets){
+      const row = setsRow = el("span", {class:"sets", role:"group", "aria-label":"Sett"});
+      sets.forEach((on, idx)=>{
+        const navn = "Sett " + (idx+1) + " av " + sets.length;
+        row.appendChild(locked
+          ? el("span", {class:"set" + (on ? " on" : ""), "aria-label":navn + (on ? ", gjort" : "")}, [String(idx+1)])
+          : el("button", {type:"button", class:"set" + (on ? " on" : ""), "aria-label":navn, "aria-pressed":String(on),
+              onclick:(e)=>{ e.stopPropagation(); toggleSet(key, item.id, idx); }}, [String(idx+1)]));
+      });
+    }
     li.appendChild(label);
 
     const sek = parseTid(item.amount);
@@ -1836,6 +1914,7 @@
     }else{
       li.appendChild(el("span", {class:"amt"}, [item.amount]));
     }
+    if(setsRow) li.appendChild(setsRow);
 
     if(!locked){
       const toggle = ()=>toggleItem(key, item.id);
