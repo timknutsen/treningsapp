@@ -2,7 +2,7 @@
 
 Enkel PWA-treningsplan for mobil, i samme stil som Ukeoppgaver-appen:
 ukestripe med flamme, store avkrysningskort, faner nederst, lyd og feiring.
-Uka bygges fra en øvelsesbank. Første gang appen åpnes, ligger
+Uka bygges fra en øvelsesbank. Første gang en konto tas i bruk, ligger
 apparatprogrammet fra treningssenteret inne på mandag og torsdag.
 
 ## Bruk
@@ -26,7 +26,7 @@ fra treningssenteret (leg press, pull down, chest press, leg extension,
 midjerotasjon, seated row og back extension), med apparatnummer, 3×15 og
 startvekt. «Legg til hele programmet» legger alle sju inn på valgt dag med
 ett trykk. Programmet legges også automatisk inn på mandag og torsdag én
-gang (`treningsplan.senterprogram.v1`). Øvelser som alt står på de dagene
+gang per konto. Øvelser som alt står på de dagene
 blir liggende, og fjernes programmet, kommer det ikke tilbake.
 Etter 10 ganger kan vekta økes. Det gjøres ved å endre mengden i
 Plan.
@@ -48,6 +48,35 @@ modus på telefonen, og animasjoner slås av under `prefers-reduced-motion`.
 Endringer i planen slår inn på kommende dager med det samme. Dager du allerede
 har huket av på, hoppet over, eller flyttet øvelser til, blir stående urørt.
 
+## Innlogging og lagring i skyen
+
+Appen bruker samme familiemedlemmer og PIN som Ukeoppgaver (`members`-tabellen
+i det felles Supabase-prosjektet). Første gang velger man navn og taster PIN;
+deretter husker telefonen hvem som er logget inn, også uten nett. Trykk på
+initialene øverst til høyre på Trening-fanen for å logge ut og bytte person.
+
+Hvert medlem har sin egen plan og logg. De lagres lokalt
+(`workout-plan-v2.<id>` og `workout-schedule-v2.<id>`) og synkes med
+Supabase:
+
+- `training_plans` — planen, med `updated_at`
+- `training_days` — én rad per dag som er endret i appen, med tidsstempel `t`.
+  Urørte dager lagres ikke, de bygges fra planen
+
+Skyen leses før appen skriver dit, så en ny telefon aldri blanker ut
+framgang. Ved sammenslåing vinner nyeste versjon av planen og av hver dag, og
+databasen nekter å la en eldre versjon overskrive en nyere. Uten nett går
+appen videre på den lokale kopien og sender endringene når nettet er tilbake.
+Andre enheters endringer hentes når appen åpnes eller kommer i forgrunnen.
+
+Plan og logg som lå på telefonen fra før kontoene kom, overtas av den første
+som logger inn der og ikke er admin. Apparatprogrammet legges inn på mandag
+og torsdag én gang per konto (ikke for admin). Tabellene er beskrevet i
+`supabase/schema.sql`.
+
+PIN-en er en enkel sperre mellom søsken, ikke ekte tilgangskontroll: alle med
+den offentlige nøkkelen kan i prinsippet lese og skrive dataene direkte.
+
 ## Si fra om feil og forslag
 
 Knappen «💬 Si fra» nederst på Trening-fanen lar deg velge «Noe er feil»
@@ -61,13 +90,11 @@ Med meldingen følger hvilken fane som var åpen og nettleserinfo, så feil er
 lettere å finne.
 
 ## Filer
-- `index.html` — selve appen (bruker localStorage; Supabase bare for «Si fra»)
+- `index.html` — selve appen (localStorage lokalt, synket med Supabase)
+- `supabase/schema.sql` — tabellene treningsappen bruker i Supabase
 - `manifest.json` — gjør appen installerbar på hjemskjermen
 - `sw.js` — service worker for offline-bruk
 - `icon-192.png` / `icon-512.png` — app-ikoner
-
-Lagring skjer i to nøkler: `workout-plan-v2` (planen) og `workout-schedule-v2`
-(framgang per dato).
 
 ## Publisere på GitHub Pages
 1. Push disse filene til et repo (rot-mappen, eller en `docs/`-mappe)
