@@ -143,6 +143,9 @@
   .sd.done .sd-mark svg{width:16px; height:16px; stroke:#3a2500; stroke-width:3.6; fill:none; stroke-linecap:round; stroke-linejoin:round}
   .sd.sel .sd-mark{box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 55%, transparent)}
   .sd.free .sd-mark{background:transparent}
+  .sd .moved-mark{font-size:1rem; font-weight:800; line-height:1; color:var(--streak)}
+  .sd.inbar .moved-mark{color:#3a2500}
+  .sd.moved .sd-mark{background:transparent}
   .sd .rest-dot{width:6px; height:6px; border-radius:50%; background:var(--line)}
   .sd.inbar .rest-dot{background:#3a2500; opacity:.55}
   .sd svg.star{width:22px; height:22px; fill:none; stroke:var(--line); stroke-width:2; stroke-linejoin:round}
@@ -297,6 +300,23 @@
   .who{appearance:none; background:none; border:none; padding:0; cursor:pointer}
   .who .member-avatar{width:34px; height:34px; font-size:.8rem}
   .who:active{transform:scale(.94)}
+
+  /* Mer vekt */
+  .lvl-chip{
+    appearance:none; display:inline-block; margin-top:6px; cursor:pointer;
+    border-radius:999px; padding:5px 10px; font:800 .74rem system-ui;
+    background:color-mix(in srgb, var(--streak-2) 18%, transparent); color:var(--streak);
+    border:1px solid color-mix(in srgb, var(--streak) 45%, transparent);
+  }
+  .lvl-chip:active{transform:scale(.95)}
+  .lvl-emoji{font-size:3.4rem; line-height:1; margin:4px 0 10px}
+  .lvl-row{display:flex; align-items:center; justify-content:center; gap:12px; margin:18px 0 2px}
+  .lvl-old{color:var(--muted); font-weight:800}
+  .lvl-row .stepper .val{min-width:64px; font-size:1.1rem}
+  .wt-row{display:flex; align-items:center; gap:11px; padding:10px 0; border-top:1px solid var(--line)}
+  .wt-prog{flex:0 0 auto; width:64px; text-align:right; font:800 .78rem system-ui; color:var(--muted)}
+  .wt-bar{height:5px; border-radius:999px; background:var(--line); overflow:hidden; margin-top:5px}
+  .wt-bar i{display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--streak),var(--streak-2))}
 
   /* Si fra */
   .fb-body{padding-top:16px}
@@ -501,6 +521,7 @@
   .cal-cell.delvis{background:color-mix(in srgb, var(--streak) 28%, var(--card-2)); color:var(--txt)}
   .cal-cell.ikke, .cal-cell.hoppet{background:color-mix(in srgb, var(--miss) 16%, var(--card-2)); color:var(--miss)}
   .cal-cell.planlagt{border-color:var(--line); color:var(--txt)}
+  .cal-cell.flyttet{background:transparent; border:2px dashed color-mix(in srgb, var(--streak) 60%, transparent); color:var(--streak)}
   .cal-cell.idag, .cal-cell.pagar{border-color:var(--streak); color:var(--txt)}
   .cal-cell.valgt{box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 55%, transparent)}
   .legend{display:flex; flex-wrap:wrap; justify-content:center; gap:8px 14px; margin-top:14px}
@@ -784,6 +805,7 @@
   let lastPull   = 0;
 
   function touch(key){
+    originCache = null;
     const d = state.days[key];
     if(!d) return;
     d.t = Date.now();
@@ -848,6 +870,7 @@
         if(!d.t) d.t = 1;   // fra før synk fantes: taper mot alt som er endret i skyen
         if(!(k in skyT) || d.t > skyT[k]) dirtyDays.add(k);
       });
+      originCache = null;
       cloudReady = true;
     });
   }
@@ -981,6 +1004,35 @@
 
   /* ---------- Status for dager og uke ---------- */
 
+  // Øvelser som flyttes, husker hvilken dag de kom fra (origin). En dag der
+  // noe ble flyttet videre, er "flyttet" når alt som ble flyttet er gjort et
+  // annet sted, eller mens det fortsatt venter på i dag eller senere. Da
+  // bryter den verken rekka eller perfekt uke. Blir det flyttede aldri gjort,
+  // teller dagen som før (hoppet over / delvis).
+  let originCache = null;
+  function originIndex(){
+    if(originCache) return originCache;
+    const tKey = dateKey(startOfDay(new Date()));
+    const idx = {};
+    Object.keys(state.days).forEach(k=>{
+      state.days[k].items.forEach(i=>{
+        if(!i.origin || i.origin >= k) return;
+        const o = idx[i.origin] || (idx[i.origin] = {n:0, undone:0, waiting:false});
+        o.n++;
+        if(!i.done){ o.undone++; if(k >= tKey) o.waiting = true; }
+      });
+    });
+    return (originCache = idx);
+  }
+  function movedStatus(key){
+    const day = state.days[key];
+    if(!day || !day.skipped) return null;
+    const o = originIndex()[key];
+    if(!o || !o.n) return null;
+    if(!o.undone) return "done";
+    return o.waiting ? "venter" : null;
+  }
+
   function isComplete(key){
     const d = state.days[key];
     return !!(d && !d.skipped && d.items.length && d.items.every(i=>i.done));
@@ -995,16 +1047,18 @@
       const d = addDays(mon,i), key = dateKey(d), day = state.days[key];
       const has = !!(day && day.items.length);
       const skipped = !!(day && day.skipped);
+      const moved = movedStatus(key);
       days.push({
-        i, d, key, day, has, skipped,
+        i, d, key, day, has, skipped, moved,
         free: !has && !skipped,
         complete: isComplete(key),
+        resolved: isComplete(key) || moved === "done",
         future: key > tKey,
         isToday: key === tKey
       });
     }
     const planned  = days.filter(x=>x.has || x.skipped).length;
-    const complete = days.filter(x=>x.complete).length;
+    const complete = days.filter(x=>x.resolved).length;
     return {days, planned, complete, perfect: planned>0 && complete===planned};
   }
 
@@ -1069,6 +1123,147 @@
     }catch(e){ /* lyd er pynt, aldri verdt en krasj */ }
   }
 
+  /* ---------- Mer vekt ----------
+     Treningssenteret sier: etter 10 ganger kan du øke vekta. Appen teller dager
+     der øvelsen er gjort på vekta som står i planen nå. Når vekta endres, starter
+     tellingen på nytt av seg selv, fordi den nye vekta ikke er gjort ennå. */
+
+  const PROGRESS_EVERY = 10;
+  const KG_RE = /(\d+(?:[.,]\d+)?)\s*kg\b/i;
+  const offered = new Set();   // tilbudt i denne økta, så det ikke spør igjen
+
+  function parseKg(amount){
+    const m = String(amount || "").match(KG_RE);
+    return m ? parseFloat(m[1].replace(",", ".")) : null;
+  }
+  function fmtKg(kg){ return String(Math.round(kg * 10) / 10).replace(".", ","); }
+  function withKg(amount, kg){ return String(amount).replace(KG_RE, fmtKg(kg) + " kg"); }
+  function nextKg(kg){ return Math.max(kg + 1, Math.round(kg * 1.1)); }
+
+  // Øvelser i planen med kg i mengden, én per navn (høyeste vekt hvis dagene er ulike).
+  function planWeights(){
+    const by = {}, order = [];
+    WEEK_ORDER.forEach(wd=>{
+      const spec = plan.days[wd];
+      if(!spec) return;
+      spec.exercises.forEach(ex=>{
+        const kg = parseKg(ex.amount);
+        if(kg == null) return;
+        const n = lower(exName(ex));
+        if(!by[n]){ by[n] = {name: exName(ex), emoji: exEmoji(ex), kg}; order.push(n); }
+        else if(kg > by[n].kg) by[n].kg = kg;
+      });
+    });
+    return order.map(n => by[n]);
+  }
+  function planWeight(name){
+    const n = lower(name);
+    return planWeights().find(w => lower(w.name) === n) || null;
+  }
+
+  function countAtKg(name, kg){
+    const n = lower(name), tKey = dateKey(startOfDay(new Date()));
+    let c = 0;
+    Object.keys(state.days).forEach(k=>{
+      if(k > tKey) return;
+      if(state.days[k].items.some(i => i.done && lower(i.name) === n && parseKg(i.amount) === kg)) c++;
+    });
+    return c;
+  }
+  function firstDoneAt(name, kg){
+    const n = lower(name);
+    return Object.keys(state.days).sort().find(k =>
+      state.days[k].items.some(i => i.done && lower(i.name) === n && parseKg(i.amount) === kg)) || null;
+  }
+
+  // Framgang for en øvelse i dagens økt, bare når den står med vekta fra planen.
+  function progressFor(item){
+    const kg = parseKg(item.amount);
+    if(kg == null) return null;
+    const w = planWeight(item.name);
+    if(!w || w.kg !== kg) return null;
+    const count = countAtKg(item.name, kg);
+    return {name: w.name, emoji: itemEmoji(item), kg, count, ready: count >= PROGRESS_EVERY};
+  }
+
+  // Når en avhuking gjør at øvelsen akkurat når 10, tilbys mer vekt.
+  function levelUpFor(item){
+    const p = progressFor(item);
+    if(!p || p.count !== PROGRESS_EVERY) return null;
+    const key = lower(p.name) + "|" + p.kg;
+    if(offered.has(key)) return null;
+    offered.add(key);
+    return p;
+  }
+
+  function bumpWeight(name, oldKg, newKg){
+    const n = lower(name);
+    let endret = false;
+    Object.keys(plan.days).forEach(wd=>{
+      plan.days[wd].exercises.forEach(ex=>{
+        if(lower(exName(ex)) === n && parseKg(ex.amount) === oldKg){
+          ex.amount = withKg(ex.amount, newKg);
+          endret = true;
+        }
+      });
+    });
+    if(!endret) return;
+    const idag = dateKey(startOfDay(new Date()));
+    plan.weights = plan.weights || {};
+    const h = plan.weights[n] || (plan.weights[n] = []);
+    if(!h.length || h[h.length-1].kg !== oldKg) h.push({d: firstDoneAt(name, oldKg) || idag, kg: oldKg});
+    h.push({d: idag, kg: newKg});
+    planChanged();
+  }
+
+  function showLevelUp(p){
+    const gammel = document.getElementById("lvl");
+    if(gammel) gammel.remove();
+    let kg = nextKg(p.kg);
+    const min = p.kg + 1, max = Math.max(p.kg * 2, p.kg + 10);
+
+    const overlay = el("div", {class:"cele-overlay", id:"lvl"});
+    const card    = el("div", {class:"cele-card perfect", role:"dialog", "aria-modal":"true"});
+    card.appendChild(el("div", {class:"lvl-emoji"}, [p.emoji]));
+    card.appendChild(el("div", {class:"cele-title"}, ["Klar for mer vekt!"]));
+    card.appendChild(el("div", {class:"cele-sub"}, [
+      p.name + ": " + p.count + " ganger på " + fmtKg(p.kg) + " kg 💪"
+    ]));
+
+    const val   = el("span", {class:"val"});
+    const minus = el("button", {type:"button", "aria-label":"Mindre vekt", onclick:()=>{ kg = Math.max(min, kg - 1); oppdater(); }}, ["−"]);
+    const plus  = el("button", {type:"button", "aria-label":"Mer vekt", onclick:()=>{ kg = Math.min(max, kg + 1); oppdater(); }}, ["+"]);
+    const ok    = el("button", {type:"button", class:"cta"});
+    function oppdater(){
+      val.textContent = fmtKg(kg) + " kg";
+      ok.textContent  = "Øk til " + fmtKg(kg) + " kg";
+      minus.disabled = kg <= min;
+      plus.disabled  = kg >= max;
+    }
+    card.appendChild(el("div", {class:"lvl-row"}, [
+      el("span", {class:"lvl-old"}, [fmtKg(p.kg) + " kg →"]),
+      el("div", {class:"stepper"}, [minus, val, plus])
+    ]));
+    oppdater();
+
+    function lukk(){ overlay.remove(); document.removeEventListener("keydown", onKey); }
+    function onKey(e){ if(e.key === "Escape") lukk(); }
+    ok.addEventListener("click", ()=>{
+      lukk();
+      buzz([12,40,18]);
+      playSound("perfect");
+      bumpWeight(p.name, p.kg, kg);
+    });
+    card.appendChild(ok);
+    card.appendChild(el("button", {type:"button", class:"push-link", onclick:lukk}, ["Ikke nå"]));
+    overlay.appendChild(card);
+    overlay.addEventListener("click", e=>{ if(e.target === overlay) lukk(); });
+    document.addEventListener("keydown", onKey);
+    document.body.appendChild(overlay);
+    ok.focus({preventScroll:true});
+    fireConfetti(card);
+  }
+
   /* ---------- Handlinger på dagens økt ---------- */
 
   function toggleItem(dayKey, itemId){
@@ -1082,19 +1277,21 @@
     if(timer && timer.dayKey === dayKey && timer.itemId === itemId) stoppTimer(true);
     buzz(item.done ? [12,40,18] : 8);
     queuePersist();
-    afterChange(dayKey, varFerdig, item.done ? "check" : "uncheck");
+    afterChange(dayKey, varFerdig, item.done ? "check" : "uncheck", item.done ? levelUpFor(item) : null);
   }
 
   // Ble dagen nettopp fullført, feires det. Ellers bare en liten lyd.
-  function afterChange(dayKey, varFerdig, lyd){
+  // Er det også tid for mer vekt, kommer det arket etter feiringen.
+  function afterChange(dayKey, varFerdig, lyd, lvl){
     if(isComplete(dayKey) && !varFerdig){
       const perfect = weekInfo().perfect && keyDate(dayKey) >= mondayOf(new Date());
       playSound(perfect ? "perfect" : "done");
       render();
-      showCelebration(dayKey, perfect);
+      showCelebration(dayKey, perfect, lvl ? ()=>showLevelUp(lvl) : null);
     }else{
       playSound(lyd);
       render();
+      if(lvl) showLevelUp(lvl);
     }
   }
 
@@ -1287,7 +1484,7 @@
       item.done = true;
       touch(dayKey);
       queuePersist();
-      afterChange(dayKey, varFerdig, "check");
+      afterChange(dayKey, varFerdig, "check", levelUpFor(item));
     }else{
       render();
     }
@@ -1321,6 +1518,7 @@
     const tKey = dateKey(startOfDay(new Date()));
     const day  = state.days[key];
 
+    if(day && day.skipped && movedStatus(key)) return "flyttet";
     if(!day || day.items.length === 0){
       return (day && day.skipped) ? "hoppet" : "hvile";
     }
@@ -1341,7 +1539,7 @@
     let i = classifyDay(today) === "fullfort" ? 0 : 1;
     for(; i < 400; i++){
       const c = classifyDay(addDays(today, -i));
-      if(c === "hvile") continue;
+      if(c === "hvile" || c === "flyttet") continue;
       if(c === "fullfort") streak++;
       else break;
     }
@@ -1370,7 +1568,7 @@
       while(d <= slutt){
         const c = classifyDay(d);
         if(c === "fullfort"){ run++; if(run > best) best = run; }
-        else if(c !== "hvile" && c !== "pagar" && c !== "idag"){ run = 0; }
+        else if(c !== "hvile" && c !== "flyttet" && c !== "pagar" && c !== "idag"){ run = 0; }
         d = addDays(d,1);
       }
     }
@@ -1429,7 +1627,7 @@
 
   /* ---------- Feiring ---------- */
 
-  function showCelebration(dayKey, perfect){
+  function showCelebration(dayKey, perfect, etterpå){
     const gammel = document.getElementById("cele");
     if(gammel) gammel.remove();
 
@@ -1473,7 +1671,11 @@
       ]));
     }
 
-    function lukk(){ overlay.remove(); document.removeEventListener("keydown", onKey); }
+    function lukk(){
+      overlay.remove();
+      document.removeEventListener("keydown", onKey);
+      if(etterpå) etterpå();
+    }
     function onKey(e){ if(e.key === "Escape") lukk(); }
     const knapp = el("button", {type:"button", class:"cta", onclick:lukk}, ["Bra jobba!"]);
     card.appendChild(knapp);
@@ -1543,7 +1745,8 @@
     while(i0 < 7){
       if(!w.days[i0].complete){ i0++; continue; }
       let i1 = i0, j = i0 + 1;
-      while(j < 7 && (w.days[j].complete || (w.days[j].free && !w.days[j].future))){
+      // Flyttede dager som er tatt igjen, kan ligge i stolpen som hviledager.
+      while(j < 7 && (w.days[j].complete || w.days[j].moved === "done" || (w.days[j].free && !w.days[j].future))){
         if(w.days[j].complete) i1 = j;
         j++;
       }
@@ -1568,7 +1771,7 @@
     row.appendChild(bars);
 
     w.days.forEach(x=>{
-      const missed = !x.future && !x.isToday && (x.has || x.skipped) && !x.complete;
+      const missed = !x.future && !x.isToday && (x.has || x.skipped) && !x.complete && !x.moved;
       // Søndag er belønningsplassen: der lyser stjerna når uka er perfekt.
       const reward = x.i === 6 && w.perfect && x.complete;
       const cls = "sd"
@@ -1576,17 +1779,20 @@
         + (x.free ? " free" : "")
         + (inBar[x.i] && !x.complete ? " inbar" : "")
         + (missed ? " miss" : "")
+        + (x.moved ? " moved" : "")
         + (reward ? " reward" : "")
         + (x.i === selected ? " sel" : "")
         + (x.isToday ? " today" : "");
       let inner;
       if(reward || (x.i === 6 && x.free)) inner = STAR_SVG;
       else if(x.complete) inner = CHECK_SVG;
+      else if(x.moved) inner = '<span class="moved-mark">↪</span>';
       else if(x.free) inner = '<span class="rest-dot"></span>';
       else inner = String(x.d.getDate());
 
       const navn = DAY_NAMES[x.d.getDay()];
-      const aria = x.free ? navn + ", hviledag"
+      const aria = x.moved ? navn + ", flyttet" + (x.moved === "done" ? " og tatt igjen" : "")
+        : x.free ? navn + ", hviledag"
         : x.complete ? navn + ", fullført"
         : navn + ", " + (x.day ? x.day.items.filter(i=>i.done).length : 0) + " av " + (x.day ? x.day.items.length : 0) + " gjort";
       row.appendChild(el("button", {
@@ -1612,7 +1818,13 @@
     const notes = [];
     if(itemNote(item)) notes.push(itemNote(item));
     if(item.pushedFrom) notes.push("Flyttet fra " + lower(DAY_NAMES[keyDate(item.pushedFrom).getDay()]));
+    const prog = locked ? null : progressFor(item);
+    if(prog && !prog.ready) notes.push(prog.count + "/" + PROGRESS_EVERY + " før mer vekt");
     if(notes.length) label.appendChild(el("span", {class:"note"}, [notes.join(" · ")]));
+    if(prog && prog.ready){
+      label.appendChild(el("button", {type:"button", class:"lvl-chip",
+        onclick:(e)=>{ e.stopPropagation(); showLevelUp(prog); }}, ["⬆️ Klar for mer vekt"]));
+    }
     li.appendChild(label);
 
     const sek = parseTid(item.amount);
@@ -1676,7 +1888,8 @@
         ]));
         panel.appendChild(el("button", {type:"button", class:"cta", onclick:()=>setView("plan")}, ["Lag treningsplan"]));
       }else if(x.skipped){
-        panel.appendChild(el("div", {class:"empty"}, [el("span", {class:"big"}, ["➡️"]), "Økta ble flyttet til dagen etter"]));
+        panel.appendChild(el("div", {class:"empty"}, [el("span", {class:"big"}, ["↪️"]),
+          x.moved === "done" ? "Økta ble flyttet og tatt igjen 💪" : "Økta ble flyttet til dagen etter"]));
       }else{
         panel.appendChild(el("div", {class:"empty"}, [el("span", {class:"big"}, ["😴"]), "Hviledag – ingen trening"]));
       }
@@ -2060,7 +2273,8 @@
     planlagt: "Planlagt",
     pagar:    "Påbegynt",
     idag:     "Ikke begynt",
-    hvile:    "Hviledag"
+    hvile:    "Hviledag",
+    flyttet:  "Flyttet til en annen dag"
   };
 
   function renderDayDetail(key){
@@ -2071,13 +2285,43 @@
     panel.appendChild(el("h2", {}, [DAY_NAMES[d.getDay()] + " " + fmtDate(d)]));
     panel.appendChild(el("div", {class:"meta"}, [KLASSE_TEKST[c] || ""]));
     if(!day || day.items.length===0){
-      panel.appendChild(el("div", {class:"empty"}, [c === "hoppet" ? "Alt ble flyttet til dagen etter." : "Ingen økt denne dagen."]));
+      panel.appendChild(el("div", {class:"empty"}, [c === "hoppet" || c === "flyttet" ? "Alt ble flyttet til en annen dag." : "Ingen økt denne dagen."]));
     }else{
       const ul = el("ul", {class:"tasks"});
       day.items.forEach(i=>ul.appendChild(renderTask(key, i, true)));
       panel.appendChild(ul);
     }
     return panel;
+  }
+
+  function renderWeights(){
+    const list = planWeights();
+    if(!list.length) return null;
+    const card = el("div", {class:"card"});
+    card.appendChild(el("div", {class:"card-title"}, ["💪 Vekter"]));
+    card.appendChild(el("div", {class:"sub", style:"margin-bottom:10px"}, [
+      "Etter " + PROGRESS_EVERY + " økter på samme vekt kan du øke."
+    ]));
+    list.forEach(w=>{
+      const count = countAtKg(w.name, w.kg);
+      const hist  = ((plan.weights || {})[lower(w.name)] || []).map(h => h.kg);
+      if(!hist.length || hist[hist.length-1] !== w.kg) hist.push(w.kg);
+      const right = count >= PROGRESS_EVERY
+        ? el("button", {type:"button", class:"lvl-chip", onclick:()=>showLevelUp({name:w.name, emoji:w.emoji, kg:w.kg, count})}, ["⬆️ Klar"])
+        : el("div", {class:"wt-prog"}, [
+            el("span", {}, [count + "/" + PROGRESS_EVERY]),
+            el("div", {class:"wt-bar"}, [el("i", {style:"width:" + Math.round(count / PROGRESS_EVERY * 100) + "%"})])
+          ]);
+      card.appendChild(el("div", {class:"wt-row"}, [
+        el("span", {class:"emoji"}, [w.emoji]),
+        el("span", {class:"label"}, [
+          el("span", {class:"name"}, [w.name]),
+          el("span", {class:"note"}, [hist.map(fmtKg).join(" → ") + " kg"])
+        ]),
+        right
+      ]));
+    });
+    return card;
   }
 
   function renderLog(app){
@@ -2101,6 +2345,8 @@
       ]));
     });
     app.appendChild(row);
+    const vekter = renderWeights();
+    if(vekter) app.appendChild(vekter);
 
     if(!stats.harHistorikk){
       app.appendChild(el("div", {class:"card"}, [el("div", {class:"empty"}, [
@@ -2137,7 +2383,7 @@
       const d   = new Date(logMonth.getFullYear(), logMonth.getMonth(), dag);
       const key = dateKey(d);
       const c   = classifyDay(key);
-      const kan = !!(state.days[key] && state.days[key].items.length) || c === "hoppet";
+      const kan = !!(state.days[key] && state.days[key].items.length) || c === "hoppet" || c === "flyttet";
       cal.appendChild(el("div", {
         class:"cal-cell "+c+(kan?" klikk":"")+(logValgt===key?" valgt":""),
         title: KLASSE_TEKST[c] || "",
@@ -2147,7 +2393,7 @@
     card.appendChild(cal);
 
     const legend = el("div", {class:"legend"});
-    [["fullfort","Fullført"],["delvis","Delvis"],["ikke","Ikke trent"],["planlagt","Planlagt"]].forEach(([k,l])=>{
+    [["fullfort","Fullført"],["delvis","Delvis"],["ikke","Ikke trent"],["flyttet","Flyttet"],["planlagt","Planlagt"]].forEach(([k,l])=>{
       legend.appendChild(el("span", {}, [el("i", {class:"cal-cell "+k}), l]));
     });
     card.appendChild(legend);
@@ -2179,6 +2425,7 @@
   }
 
   function render(){
+    originCache = null;
     refreshToday();
     const app = document.getElementById("app");
     app.innerHTML = "";
