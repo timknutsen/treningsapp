@@ -267,6 +267,28 @@
   }
   .reset:active{transform:scale(.95)}
 
+  /* Si fra */
+  .fb-body{padding-top:16px}
+  .fb-choices{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px}
+  .fb-choice{
+    appearance:none; background:var(--card-2); border:1.5px solid var(--line); color:var(--txt);
+    border-radius:14px; padding:14px 8px; cursor:pointer; font:800 .86rem system-ui;
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+  }
+  .fb-choice .emoji{font-size:1.6rem}
+  .fb-choice:active{transform:scale(.97)}
+  .fb-choice[aria-pressed="true"]{
+    border-color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, var(--card-2));
+  }
+  .fb-text{
+    width:100%; background:var(--card-2); border:1px solid var(--line); border-radius:14px;
+    color:var(--txt); font:inherit; font-size:16px; padding:12px 13px; outline:none; resize:vertical;
+    margin-bottom:14px;
+  }
+  .fb-text:focus{border-color:var(--accent)}
+  .fb-text::placeholder{color:var(--muted)}
+  .cta:disabled{opacity:.4; cursor:default; transform:none}
+
   /* Store knapper i Duolingo-stil: tykk, med "3D"-kant som forsvinner ved trykk */
   .cta{
     width:100%; appearance:none; border:none; border-radius:16px; padding:15px;
@@ -598,6 +620,10 @@
   const PLAN_KEY    = "workout-plan-v2";
   const STORAGE_KEY = "workout-schedule-v2";
   const SOUND_KEY   = "treningsplan.lyd.v1";
+  const FEEDBACK_QUEUE_KEY = "treningsplan.tilbakemelding.v1";
+  // Samme Supabase-prosjekt og offentlige nøkkel som Ukeoppgaver.
+  const SUPABASE_URL = "https://xishtaqioetncnczznuv.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_uH-lmVlIlxiW-GQeXEH-3A_gIUEV_vW";
   const LEGACY_KEYS = ["workout-plan-v1", "workout-schedule-v1"];
   const WINDOW_DAYS = 60;
   const MAX_ROUNDS  = 6;
@@ -1460,8 +1486,134 @@
     }, [soundOn ? "🔊" : "🔇"]);
     app.appendChild(el("footer", {}, [
       el("span", {}, [st.best > 0 ? "Rekord: " + st.best + " på rad · " + st.okter + " økter totalt" : "Huk av øvelsene etter hvert som du gjør dem"]),
-      soundBtn
+      el("span", {style:"display:flex; gap:8px; flex:0 0 auto"}, [
+        el("button", {type:"button", class:"reset", onclick:openFeedback}, ["💬 Si fra"]),
+        soundBtn
+      ])
     ]));
+  }
+
+  /* ---------- Si fra: feil og forslag ---------- */
+
+  // Meldingene havner i feedback-tabellen i Supabase, og vises i Admin-fanen
+  // i Ukeoppgaver. Uten nett legges de i kø og sendes neste gang appen er på nett.
+  function sendFeedback(m){
+    return fetch(SUPABASE_URL + "/rest/v1/feedback", {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY,
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal"
+      },
+      body: JSON.stringify(m)
+    }).then(res => { if(!res.ok) throw new Error("HTTP " + res.status); });
+  }
+
+  function readQueue(){
+    try{
+      const q = JSON.parse(localStorage.getItem(FEEDBACK_QUEUE_KEY) || "[]");
+      return Array.isArray(q) ? q : [];
+    }catch(e){ return []; }
+  }
+  function writeQueue(q){
+    try{
+      if(q.length) localStorage.setItem(FEEDBACK_QUEUE_KEY, JSON.stringify(q));
+      else localStorage.removeItem(FEEDBACK_QUEUE_KEY);
+    }catch(e){}
+  }
+
+  let flushing = false;
+  function flushFeedback(){
+    if(flushing || !navigator.onLine) return;
+    const q = readQueue();
+    if(!q.length) return;
+    flushing = true;
+    // Én om gangen, så en melding aldri sendes to ganger hvis noe feiler midtveis.
+    sendFeedback(q[0])
+      .then(()=>{ writeQueue(readQueue().slice(1)); flushing = false; flushFeedback(); })
+      .catch(()=>{ flushing = false; });
+  }
+
+  function openFeedback(){
+    let kind = null;
+
+    const overlay = el("div", {class:"sheet-overlay"});
+    const sheet   = el("div", {class:"sheet", role:"dialog", "aria-modal":"true", "aria-label":"Si fra",
+      onclick:(e)=>e.stopPropagation()});
+    const body    = el("div", {class:"sheet-body fb-body"});
+
+    function close(){ overlay.remove(); document.removeEventListener("keydown", onKey); }
+    function onKey(e){ if(e.key==="Escape") close(); }
+    overlay.addEventListener("click", close);
+    document.addEventListener("keydown", onKey);
+
+    const choices = el("div", {class:"fb-choices"});
+    const text    = el("textarea", {class:"fb-text", rows:"5", maxlength:"2000",
+      placeholder:"Velg først om det er en feil eller en idé", "aria-label":"Melding"});
+    const send    = el("button", {type:"button", class:"cta", onclick:submit}, ["Send"]);
+    send.disabled = true;
+
+    function update(){ send.disabled = !kind || !text.value.trim(); }
+    text.addEventListener("input", update);
+
+    [["feil","🐛","Noe er feil","Hva skjedde? Hva trykket du på?"],
+     ["forslag","💡","Jeg har en idé","Hva vil du at appen skal kunne?"]].forEach(([k, emoji, label, hint])=>{
+      const b = el("button", {type:"button", class:"fb-choice", "aria-pressed":"false", onclick:()=>{
+        kind = k;
+        choices.querySelectorAll(".fb-choice").forEach(x=>x.setAttribute("aria-pressed", String(x === b)));
+        text.placeholder = hint;
+        buzz(8);
+        update();
+        text.focus();
+      }}, [el("span", {class:"emoji"}, [emoji]), label]);
+      choices.appendChild(b);
+    });
+
+    function done(icon, msg){
+      body.innerHTML = "";
+      body.appendChild(el("div", {class:"empty"}, [el("span", {class:"big"}, [icon]), msg]));
+      body.appendChild(el("button", {type:"button", class:"cta", onclick:close}, ["Lukk"]));
+    }
+
+    function submit(){
+      const message = text.value.trim();
+      if(!kind || !message) return;
+      send.disabled = true;
+      const m = {
+        app: "trening",
+        kind,
+        message: message.slice(0, 2000),
+        context: ("fane: " + view + " · " + navigator.userAgent).slice(0, 500),
+        created_at: new Date().toISOString()
+      };
+      // Køen først: da er meldingen trygg selv om appen lukkes mens den sendes.
+      writeQueue(readQueue().concat([m]));
+      const offline = ()=>done("📮", "Lagret! Den sendes neste gang du er på nett.");
+      if(!navigator.onLine || flushing){ offline(); return; }
+      flushing = true;
+      sendFeedback(m).then(()=>{
+        writeQueue(readQueue().filter(x => x.created_at !== m.created_at));
+        flushing = false;
+        playSound("check");
+        done("✅", "Takk! Meldingen er sendt.");
+        flushFeedback();
+      }).catch(()=>{ flushing = false; offline(); });
+    }
+
+    body.appendChild(choices);
+    body.appendChild(text);
+    body.appendChild(send);
+
+    sheet.appendChild(el("div", {class:"sheet-head"}, [
+      el("div", {class:"sheet-title", style:"margin-bottom:0"}, [
+        el("h2", {}, ["Si fra"]),
+        el("button", {type:"button", class:"x-btn", "aria-label":"Lukk", onclick:close}, ["✕"])
+      ])
+    ]));
+    sheet.appendChild(body);
+    overlay.appendChild(sheet);
+    document.body.appendChild(overlay);
   }
 
   /* ---------- Visning: Plan ---------- */
@@ -1777,6 +1929,8 @@
   });
 
   load();
+  flushFeedback();
+  window.addEventListener("online", flushFeedback);
 
   if("serviceWorker" in navigator){
     window.addEventListener("load", ()=>{
