@@ -44,6 +44,16 @@ vises med ↪. Den bryter verken rekka eller perfekt uke så lenge det som ble
 flyttet blir gjort (eller fortsatt venter på i dag eller senere). Blir det
 aldri gjort, teller dagen som hoppet over.
 
+## Sett
+
+Øvelser med sett i mengden, som `3×15 · 18 kg` eller `6 × 400 m`, får én
+rund knapp per sett under øvelsen. Trykk på et sett for å huke det av;
+øvelsen blir gjort når alle settene er tatt. Trykk på selve raden huker av,
+eller fjerner, alle settene på én gang. Har øvelsen både sett og tid (som
+`3×60 sek`), huker timeren av neste sett. Settene lagres per dag
+(`sets` på øvelsen) og synkes som resten. En dag der bare noen sett er tatt,
+regnes som påbegynt og bygges ikke om når planen endres.
+
 ## Mer vekt
 
 Treningssenteret sier at vekta kan økes etter 10 ganger. For øvelser med kg i
