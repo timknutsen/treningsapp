@@ -45,7 +45,8 @@ Avhuking gir et lite «pling», og fullført økt gir en fanfare. Høyttaleren
 nederst skrur lyden av og på (`treningsplan.lyd.v1`). Appen følger mørk/lys
 modus på telefonen, og animasjoner slås av under `prefers-reduced-motion`.
 
-Endringer i planen slår inn på kommende dager med det samme. Dager du allerede
+Endringer i planen slår inn med det samme på resten av uka og framover,
+også på dager tidligere i uka som ikke er påbegynt. Dager du allerede
 har huket av på, hoppet over, eller flyttet øvelser til, blir stående urørt.
 
 ## Innlogging og lagring i skyen

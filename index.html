@@ -907,10 +907,15 @@
     return !day.items.some(i => i.done || i.pushedFrom);
   }
 
+  // Vinduet starter på mandag i inneværende uke, ikke i dag: dager bak i uka
+  // kan fortsatt hukes av, så de skal følge planen så lenge de er urørte.
+  // Eldre uker er historikk og bygges aldri om.
   function syncWindow(st){
     const today = startOfDay(new Date());
-    for(let i=0;i<WINDOW_DAYS;i++){
-      const d   = addDays(today,i);
+    const start = mondayOf(today);
+    const antall = Math.round((today - start) / 86400000) + WINDOW_DAYS;
+    for(let i=0;i<antall;i++){
+      const d   = addDays(start,i);
       const key = dateKey(d);
       const existing = st.days[key];
       const def = defaultForDate(d);
@@ -2035,7 +2040,7 @@
     app.appendChild(panel);
 
     const footer = el("footer", {}, [
-      el("span", {}, ["Endringer gjelder fra i dag. Dager du har startet på, blir stående."])
+      el("span", {}, ["Endringer gjelder hele denne uka og framover. Dager du har startet på, blir stående."])
     ]);
     if(!isPlanEmpty()){
       footer.appendChild(el("button", {type:"button", class:"reset", onclick:()=>{
