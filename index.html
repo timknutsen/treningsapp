@@ -266,7 +266,7 @@
   .reset{
     appearance:none; background:transparent; border:1px solid var(--line);
     color:var(--muted); border-radius:999px; padding:7px 13px; font-size:.74rem;
-    cursor:pointer; font-weight:600;
+    cursor:pointer; font-weight:600; white-space:nowrap; flex:0 0 auto;
   }
   .reset:active{transform:scale(.95)}
 
@@ -313,6 +313,9 @@
   button.set:active{transform:scale(.9)}
   .set.on{background:var(--done); border-color:var(--done); color:#04121f}
   li.task.done .set.on{opacity:.75}
+  .sets .amt{margin-left:auto; align-self:center; padding:5px 9px; font-size:.74rem}
+  /* Smale skjermer: settene starter under emojien, så mengden får plass på samme linje. */
+  @media (max-width:390px){ .sets{gap:6px; margin-left:calc(28px + 13px)} }
 
   /* Mer vekt */
   .lvl-chip{
@@ -465,6 +468,10 @@
   .sheet-head{padding:18px 16px 12px; border-bottom:1px solid var(--line); flex-shrink:0}
   .sheet-title{display:flex; align-items:center; gap:10px; margin-bottom:12px}
   .sheet-title h2{font-size:1.1rem; font-weight:800; margin:0; flex:1}
+  .picker-status{font-size:.8rem; font-weight:700; color:var(--done); min-height:0; margin-top:0}
+  .picker-status:not(:empty){margin-top:8px}
+  .picker-status.vis{animation:pickerPop .3s ease}
+  @keyframes pickerPop{from{opacity:0; transform:translateY(-3px)}to{opacity:1; transform:none}}
   .search{
     width:100%; background:var(--card-2); border:1px solid var(--line); border-radius:12px;
     color:var(--txt); font:inherit; font-size:16px; padding:11px 13px; outline:none;
@@ -1907,14 +1914,16 @@
     }
     li.appendChild(label);
 
+    // Med sett står mengden til høyre på sett-linja, så navnet får hele bredden.
+    const amtHost = setsRow || li;
     const sek = parseTid(item.amount);
     if(sek && !locked){
-      li.appendChild(el("button", {
+      amtHost.appendChild(el("button", {
         type:"button", class:"amt tid", "aria-label":"Start timer, " + item.amount,
         onclick:(e)=>{ e.stopPropagation(); startTimer(key, item.id, sek); }
       }, ["▶ " + item.amount]));
     }else{
-      li.appendChild(el("span", {class:"amt"}, [item.amount]));
+      amtHost.appendChild(el("span", {class:"amt"}, [item.amount]));
     }
     if(setsRow) li.appendChild(setsRow);
 
@@ -2187,10 +2196,20 @@
     overlay.addEventListener("click", close);
     document.addEventListener("keydown", onKey);
 
+    // Velgeren blir stående åpen, så flere øvelser kan legges til på rad.
+    const status = el("div", {class:"picker-status", "aria-live":"polite"});
+    let lagtTil = 0;
+    function added(name){
+      lagtTil++;
+      status.textContent = "✓ " + name + " lagt til" + (lagtTil > 1 ? " · " + lagtTil + " totalt" : "");
+      status.classList.remove("vis"); void status.offsetWidth; status.classList.add("vis");
+      drawList(search.value);
+    }
     function pick(ex){
       buzz(10);
-      close();
+      chosen.add(ex.id);
       addExercise(wd, {exId: ex.id, amount: ex.amount});
+      added(ex.name);
     }
 
     function drawList(query){
@@ -2237,8 +2256,10 @@
       function addCustom(){
         const n = fName.value.trim();
         if(!n){ fName.focus(); return; }
-        close();
+        buzz(10);
         addExercise(wd, {exId:null, name:n, amount: fAmt.value.trim() || "1 sett"});
+        search.value = "";
+        added(n);
       }
       fName.addEventListener("keydown", e=>{ if(e.key==="Enter") addCustom(); });
       fAmt .addEventListener("keydown", e=>{ if(e.key==="Enter") addCustom(); });
@@ -2254,7 +2275,8 @@
         el("h2", {}, ["Legg til på " + lower(DAY_NAMES[wd])]),
         el("button", {type:"button", class:"x-btn", "aria-label":"Lukk", onclick:close}, ["✕"])
       ]),
-      search
+      search,
+      status
     ]));
     sheet.appendChild(list);
     overlay.appendChild(sheet);
@@ -2419,7 +2441,7 @@
     ]));
 
     const row = el("div", {class:"stat-row"});
-    [["🔥 På rad", stats.streak], ["🏆 Rekord", stats.best], ["📅 Denne mnd", stats.maned]].forEach(([l,v])=>{
+    [["🔥 På rad", stats.streak], ["🏆 Rekord", stats.best], ["📅 Måned", stats.maned]].forEach(([l,v])=>{
       row.appendChild(el("div", {class:"stat"}, [
         el("div", {class:"stat-label"}, [l]),
         el("div", {class:"stat-value"}, [String(v)])

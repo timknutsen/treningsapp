@@ -13,7 +13,8 @@ apparatprogrammet fra treningssenteret inne på mandag og torsdag.
   økter fullført av planlagt denne uka. Trykk på en dag i stripa for å se
   økta. Dager bak i uka kan hukes av i etterkant, kommende dager vises bare
 - **Plan** — velg en ukedag, legg til øvelser fra banken (eller en egen),
-  juster mengde og antall runder. Tomme dager er hviledager
+  juster mengde og antall runder. Tomme dager er hviledager. Velgeren blir
+  stående åpen, så flere øvelser kan legges til på rad
 - **Logg** — antall økter, rekke, rekord og en månedskalender. Trykk på en
   dag for å se hva som ble gjort
 
