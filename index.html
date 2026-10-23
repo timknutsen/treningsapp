@@ -430,6 +430,33 @@
     outline:none; font-variant-numeric:tabular-nums;
   }
   .amount-input:focus{border-color:var(--accent)}
+  button.amount-input{cursor:pointer; appearance:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  button.amount-input:active{transform:scale(.95)}
+
+  /* Rullehjul */
+  .amount-preview{color:var(--accent); font-weight:800; font-size:1.05rem; margin-top:3px; font-variant-numeric:tabular-nums}
+  .wheels{display:flex; gap:6px; margin:6px 0 4px}
+  .wheel{flex:1; min-width:0}
+  .wheel-label{text-align:center; font-size:.7rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:6px}
+  .wheel-win{position:relative; height:200px; border-radius:14px; background:var(--card-2); overflow:hidden}
+  .wheel-win::before{
+    content:""; position:absolute; left:4px; right:4px; top:80px; height:40px; border-radius:10px; pointer-events:none;
+    background:color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+  .wheel-list{
+    height:100%; overflow-y:auto; scroll-snap-type:y mandatory; padding:80px 0; box-sizing:border-box;
+    scrollbar-width:none; overscroll-behavior:contain; outline:none; position:relative; touch-action:pan-y;
+    -webkit-mask-image:linear-gradient(transparent, #000 30%, #000 70%, transparent);
+            mask-image:linear-gradient(transparent, #000 30%, #000 70%, transparent);
+  }
+  .wheel-list::-webkit-scrollbar{display:none}
+  .wheel-list:focus-visible{box-shadow:inset 0 0 0 2px var(--accent); border-radius:14px}
+  .wheel-item{
+    height:40px; line-height:40px; text-align:center; scroll-snap-align:center; cursor:pointer;
+    font-size:1.05rem; font-weight:600; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap;
+    transition:color .12s, transform .12s;
+  }
+  .wheel-item.on{color:var(--txt); font-weight:800; transform:scale(1.08)}
   .x-btn{
     appearance:none; background:none; border:none; color:var(--muted); cursor:pointer;
     font-size:1.05rem; padding:4px 6px; line-height:1;
@@ -2871,6 +2898,138 @@
     document.body.appendChild(overlay);
   }
 
+  /* ---------- Mengde med rullehjul ----------
+     "3×15 · 18 kg", "20 stk", "60 sek", "6×400 m" og "4 km" tolkes til sett,
+     antall, enhet og vekt. Hjulene er vanlige rullelister med scroll-snap.
+     Det som ikke lar seg tolke, kan skrives inn som tekst. */
+
+  const ENHETER = ["stk", "sek", "min", "m", "km"];
+  const range = (fra, til, steg) => { const a = []; for(let v = fra; v <= til + 1e-9; v += steg) a.push(Math.round(v*10)/10); return a; };
+  const ANTALL = {stk:range(1,100,1), sek:range(5,300,5), min:range(1,120,1), m:range(50,5000,50), km:range(.5,42,.5)};
+  const SETT = range(1, 10, 1);
+  const KILO = [0].concat(range(1, 40, .5), range(41, 200, 1));
+  const tall = v => String(v).replace(".", ",");
+
+  function parseAmount(a){
+    const m = String(a || "").match(/^\s*(?:(\d+)\s*[×x]\s*)?(\d+(?:[.,]\d+)?)\s*(stk|sek|min|km|m)?(?:\s|·|$)/i);
+    if(!m) return null;
+    const kg = parseKg(a);
+    const enhet = (m[3] || (kg ? "stk" : "")).toLowerCase();
+    if(!enhet) return null;
+    return {sett: m[1] ? parseInt(m[1], 10) : 1, antall: parseFloat(m[2].replace(",", ".")), enhet, kg: kg || 0};
+  }
+  function formatAmount(v){
+    let s = (v.sett > 1 ? v.sett + "×" : "") + tall(v.antall);
+    if(v.enhet !== "stk" || !v.kg) s += " " + v.enhet;
+    if(v.enhet === "stk" && v.kg) s += " · " + fmtKg(v.kg) + " kg";
+    return s;
+  }
+  const naermest = (liste, v) => liste.reduce((b, x) => Math.abs(x - v) < Math.abs(b - v) ? x : b, liste[0]);
+
+  const HJUL_H = 40;
+  // Ett hjul. onPick kalles hver gang midtverdien endrer seg.
+  function wheel(label, verdier, valgt, vis, onPick){
+    const liste = el("div", {class:"wheel-list", role:"listbox", tabindex:"0", "aria-label":label});
+    verdier.forEach((v, i)=>{
+      liste.appendChild(el("div", {class:"wheel-item", role:"option", "data-i":String(i),
+        onclick:()=>liste.scrollTo({top:i*HJUL_H, behavior:"smooth"})}, [vis(v)]));
+    });
+    let idx = Math.max(0, verdier.indexOf(valgt));
+    function marker(){
+      liste.querySelectorAll(".wheel-item").forEach((it, i)=>{
+        const on = i === idx;
+        it.classList.toggle("on", on);
+        it.setAttribute("aria-selected", String(on));
+      });
+    }
+    let raf = null;
+    liste.addEventListener("scroll", ()=>{
+      if(raf) return;
+      raf = requestAnimationFrame(()=>{
+        raf = null;
+        const i = Math.max(0, Math.min(verdier.length-1, Math.round(liste.scrollTop / HJUL_H)));
+        if(i === idx) return;
+        idx = i; marker(); buzz(4); onPick(verdier[i]);
+      });
+    });
+    liste.addEventListener("keydown", e=>{
+      const d = e.key === "ArrowDown" ? 1 : e.key === "ArrowUp" ? -1 : 0;
+      if(!d) return;
+      e.preventDefault();
+      liste.scrollTo({top:Math.max(0, Math.min(verdier.length-1, idx+d))*HJUL_H, behavior:"smooth"});
+    });
+    marker();
+    const wrap = el("div", {class:"wheel"}, [el("div", {class:"wheel-label"}, [label]), el("div", {class:"wheel-win"}, [liste])]);
+    wrap.plasser = ()=>{ liste.scrollTop = idx * HJUL_H; };
+    return wrap;
+  }
+
+  function openAmount(navn, amount, lagre){
+    const start = parseAmount(amount);
+    const v = start ? Object.assign({}, start) : {sett:1, antall:10, enhet:"stk", kg:0};
+    let fritekst = !start;
+
+    const overlay = el("div", {class:"sheet-overlay"});
+    const sheet   = el("div", {class:"sheet amount-sheet", role:"dialog", "aria-modal":"true", "aria-label":"Mengde for " + navn,
+      onclick:(e)=>e.stopPropagation()});
+    function close(){ overlay.remove(); document.removeEventListener("keydown", onKey); }
+    function onKey(e){ if(e.key === "Escape") close(); }
+    overlay.addEventListener("click", close);
+    document.addEventListener("keydown", onKey);
+
+    const preview = el("div", {class:"amount-preview"});
+    const body    = el("div", {class:"sheet-body"});
+    const tekst   = el("input", {class:"search", type:"text", value:amount, "aria-label":"Mengde som tekst"});
+    tekst.addEventListener("input", ()=>{ preview.textContent = tekst.value.trim() || "–"; });
+    tekst.addEventListener("keydown", e=>{ if(e.key === "Enter") ok(); });
+
+    function tegn(){
+      body.innerHTML = "";
+      if(fritekst){
+        preview.textContent = tekst.value.trim() || "–";
+        body.appendChild(tekst);
+        if(start) body.appendChild(el("button", {type:"button", class:"push-link", onclick:()=>{ fritekst = false; tegn(); }}, ["Bruk rullehjul"]));
+        setTimeout(()=>tekst.focus(), 50);
+      }else{
+        preview.textContent = formatAmount(v);
+        const oppdater = ()=>{ preview.textContent = formatAmount(v); };
+        const hjul = [
+          wheel("Sett", SETT, v.sett, String, x=>{ v.sett = x; oppdater(); }),
+          wheel(v.enhet === "stk" ? "Antall" : "Mengde", ANTALL[v.enhet], v.antall, tall, x=>{ v.antall = x; oppdater(); }),
+          wheel("Enhet", ENHETER, v.enhet, String, x=>{
+            v.enhet = x;
+            v.antall = naermest(ANTALL[x], v.antall);
+            if(x !== "stk") v.kg = 0;
+            // Antall-hjulet bytter verdier når enheten endres.
+            clearTimeout(tegn.t); tegn.t = setTimeout(tegn, 450);
+            oppdater();
+          })
+        ];
+        if(v.enhet === "stk") hjul.push(wheel("Vekt", KILO, naermest(KILO, v.kg), x => x ? tall(x) + " kg" : "–", x=>{ v.kg = x; oppdater(); }));
+        body.appendChild(el("div", {class:"wheels"}, hjul));
+        body.appendChild(el("button", {type:"button", class:"push-link", onclick:()=>{ fritekst = true; tekst.value = formatAmount(v); tegn(); }}, ["Skriv selv i stedet"]));
+        requestAnimationFrame(()=>hjul.forEach(h => h.plasser()));
+      }
+      body.appendChild(el("button", {type:"button", class:"cta", onclick:ok}, ["Lagre"]));
+    }
+    function ok(){
+      const ny = fritekst ? tekst.value.trim() : formatAmount(v);
+      close();
+      if(ny && ny !== amount){ buzz(10); lagre(ny); }
+    }
+
+    sheet.appendChild(el("div", {class:"sheet-head"}, [
+      el("div", {class:"sheet-title", style:"margin-bottom:0"}, [
+        el("div", {style:"flex:1; min-width:0"}, [el("h2", {}, [navn]), preview]),
+        el("button", {type:"button", class:"x-btn", "aria-label":"Lukk", onclick:close}, ["✕"])
+      ])
+    ]));
+    sheet.appendChild(body);
+    overlay.appendChild(sheet);
+    document.body.appendChild(overlay);
+    tegn();
+  }
+
   /* ---------- Visning: Plan ---------- */
 
   // Velgeren bygger og rydder sitt eget DOM-tre utenfor render(), slik at
@@ -3008,9 +3167,8 @@
     if(has){
       const ul = el("ul", {class:"tasks"});
       spec.exercises.forEach((ex,idx)=>{
-        const amt = el("input", {class:"amount-input", type:"text", value:ex.amount, "aria-label":"Mengde for " + exName(ex)});
-        amt.addEventListener("change", ()=>setAmount(wd, idx, amt.value));
-        amt.addEventListener("keydown", e=>{ if(e.key === "Enter") amt.blur(); });
+        const amt = el("button", {type:"button", class:"amount-input", "aria-label":"Endre mengde for " + exName(ex) + ": " + ex.amount,
+          onclick:()=>{ buzz(8); openAmount(exName(ex), ex.amount, v => setAmount(wd, idx, v)); }}, [ex.amount]);
         ul.appendChild(el("li", {class:"pl-row"}, [
           emojiEl(ex, exEmoji(ex), ex.amount),
           el("span", {class:"label"}, [
