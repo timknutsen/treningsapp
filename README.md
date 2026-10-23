@@ -45,6 +45,19 @@ vises med ↪. Den bryter verken rekka eller perfekt uke så lenge det som ble
 flyttet blir gjort (eller fortsatt venter på i dag eller senere). Blir det
 aldri gjort, teller dagen som hoppet over.
 
+## Gjest
+
+«Prøv som gjest» på innloggingen gir en konto som bare lagres i nettleseren
+(`localStorage`, nøklene med `.gjest`). Ingenting sendes til Supabase.
+Gjesten får senterprogrammet på mandag og torsdag å prøve seg på.
+
+## Spenst
+
+Egen fane med råd for spenst fra forskning på hopptrening for ungdom og
+håndball (oversiktsartikler og kontrollerte forsøk fra PubMed, med lenke til
+DOI), og et forslag til spenstøkt. Trykk på en øvelse i forslaget for å se
+hvordan den gjøres.
+
 ## Slik gjør du
 
 Øvelser fra banken har et lite blått **i** på emojien, både i Trening og i

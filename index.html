@@ -510,17 +510,20 @@
   }
 
   /* Slik gjør du */
+  /* 44 px trykkflate med en svak ring, men samme plass i raden som en vanlig emoji. */
   .how-btn{
-    appearance:none; background:none; border:none; padding:4px; margin:-4px; cursor:pointer;
-    position:relative; color:inherit; font-family:inherit; border-radius:10px;
+    appearance:none; border:none; cursor:pointer; position:relative; flex:0 0 auto;
+    width:44px; height:44px; margin:-10px -5px -10px -11px; padding:0; display:grid; place-items:center;
+    border-radius:50%; color:inherit; font-family:inherit; line-height:1;
+    background:color-mix(in srgb, var(--accent) 10%, transparent);
+    transition:transform .12s, background .15s;
   }
   .how-btn::after{
-    content:"i"; position:absolute; right:-3px; bottom:-2px; width:14px; height:14px; border-radius:50%;
-    background:var(--accent); color:var(--card); font:800 10px/14px Georgia,serif; font-style:italic; text-align:center;
+    content:"i"; position:absolute; right:1px; bottom:1px; width:17px; height:17px; border-radius:50%;
+    background:var(--accent); color:var(--card); font:800 11px/17px Georgia,serif; font-style:italic; text-align:center;
     box-shadow:0 0 0 2px var(--card-2);
   }
-  .how-btn:active{transform:scale(.9)}
-  .pl-row .how-btn{margin-right:2px}
+  .how-btn:active{transform:scale(.88); background:color-mix(in srgb, var(--accent) 22%, transparent)}
   .how-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
   .how-emoji{font-size:1.8rem; line-height:1}
   .how-meta{color:var(--muted); font-size:.8rem; font-weight:600; margin-top:2px}
@@ -549,6 +552,41 @@
     background:color-mix(in srgb, var(--streak-2) 12%, transparent);
     border:1px solid color-mix(in srgb, var(--streak) 30%, transparent);
     border-radius:12px; padding:11px 13px; font-size:.86rem; line-height:1.45; margin-bottom:14px;
+  }
+
+  /* Gjest */
+  .guest-btn{
+    appearance:none; cursor:pointer; background:transparent; color:var(--txt);
+    border:1.5px dashed var(--line); border-radius:14px; padding:12px; font:700 .9rem system-ui;
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+  }
+  .guest-btn small{color:var(--muted); font-weight:500; font-size:.74rem}
+  .guest-btn:active{transform:scale(.98)}
+  .guest-note{
+    margin:10px 0 0; padding:8px 12px; border-radius:12px; font-size:.78rem; color:var(--muted);
+    background:var(--card); border:1px solid var(--line);
+  }
+
+  /* Spenst */
+  .spenst-okt{margin-top:16px}
+  .spenst-okt h2{margin:0; font-size:1.05rem}
+  .spenst-okt .meta{color:var(--muted); font-size:.8rem; margin-top:3px}
+  .okt-list{list-style:none; margin:12px 0 0; padding:0; display:grid; gap:8px}
+  .okt-list li{
+    display:flex; align-items:center; gap:13px; background:var(--card-2); border:1px solid var(--line);
+    border-radius:14px; padding:12px 14px 12px 18px;
+  }
+  .okt-list .name{flex:1; font-weight:650}
+  .okt-hint{color:var(--muted); font-size:.76rem; margin-top:10px}
+  .rad-list{display:grid; gap:10px; margin-top:4px}
+  .rad{display:flex; gap:12px; background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:14px}
+  .rad-ikon{font-size:1.4rem; line-height:1.2}
+  .rad h3{margin:0 0 4px; font-size:.96rem}
+  .rad p{margin:0; color:var(--muted); font-size:.86rem; line-height:1.45}
+  .rad-kilder{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
+  .rad-kilder a{
+    font-size:.72rem; font-weight:700; color:var(--accent); text-decoration:none; white-space:nowrap;
+    padding:3px 8px; border-radius:999px; background:color-mix(in srgb, var(--accent) 10%, transparent);
   }
 
   /* ---------- Logg ---------- */
@@ -641,6 +679,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v3M16 3v3M3 10h18"/></svg>
       <span>Plan</span>
     </button>
+    <button type="button" class="tab" data-view="spenst">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V6M7 11l5-5 5 5M5 20h14"/></svg>
+      <span>Spenst</span>
+    </button>
     <button type="button" class="tab" data-view="log">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-6M12 20V5M19 20v-10"/></svg>
       <span>Logg</span>
@@ -689,14 +731,14 @@
     {id:"ts_seatedrow", name:"Seated row",           amount:"3×15 · 18 kg", group:"Treningssenter", emoji:"🚣", machine:"7"},
     {id:"ts_backext",   name:"Back extension",       amount:"3×15 · 18 kg", group:"Treningssenter", emoji:"🦸", machine:"15"},
 
-    {id:"spensthopp",   name:"Spensthopp",           amount:"20 stk",    group:"Bein",      emoji:"🦘"},
+    {id:"spensthopp",   name:"Spensthopp",           amount:"3×5 stk",   group:"Bein",      emoji:"🦘"},
     {id:"utfall",       name:"Utfall m/ 3 kg vekter",amount:"30 stk",    group:"Bein",      emoji:"🦵"},
     {id:"knebøy",       name:"Knebøy",               amount:"20 stk",    group:"Bein",      emoji:"🏋️"},
     {id:"bulgarsk",     name:"Bulgarsk utfall",      amount:"12 stk",    group:"Bein",      emoji:"🦵"},
     {id:"tåhev",        name:"Tåhev",                amount:"25 stk",    group:"Bein",      emoji:"🦶"},
-    {id:"bokshopp",     name:"Bokshopp",             amount:"15 stk",    group:"Bein",      emoji:"📦"},
-    {id:"dropphopp",    name:"Dropphopp",            amount:"3×6 stk",   group:"Bein",      emoji:"⬇️"},
-    {id:"skaterhopp",   name:"Skaterhopp",           amount:"3×8 stk",   group:"Bein",      emoji:"⛸️"},
+    {id:"bokshopp",     name:"Bokshopp",             amount:"3×5 stk",   group:"Bein",      emoji:"📦"},
+    {id:"dropphopp",    name:"Dropphopp",            amount:"3×5 stk",   group:"Bein",      emoji:"⬇️"},
+    {id:"skaterhopp",   name:"Skaterhopp",           amount:"3×6 stk",   group:"Bein",      emoji:"⛸️"},
 
     {id:"pushups",      name:"Pushups",              amount:"12 stk",    group:"Overkropp", emoji:"💪"},
     {id:"hangups",      name:"Hang ups",             amount:"5 stk",     group:"Overkropp", emoji:"🧗"},
@@ -815,9 +857,14 @@
   function figureSvg(spec, still){
     const poses = spec.poses.map(solvePose);
     const loop  = poses.concat([poses[0]]);
+    const raw   = spec.poses.concat([spec.poses[0]]);
     const n     = loop.length;
     const dur   = (spec.dur || 2.4) + "s";
-    const kt    = loop.map((_,i) => (i/(n-1)).toFixed(3)).join(";");
+    // d på en stilling er hvor lang overgangen til neste er (1 = vanlig).
+    const vekt  = raw.slice(0, -1).map(p => p.d || 1);
+    const sum   = vekt.reduce((a,b)=>a+b, 0);
+    let acc = 0;
+    const kt    = raw.map((_,i) => { if(i) acc += vekt[i-1]; return (i === n-1 ? 1 : acc/sum).toFixed(3); }).join(";");
     const ks    = loop.slice(1).map(()=>"0.45 0 0.55 1").join(";");
     const anim  = (attr, vals) => still ? "" :
       '<animate attributeName="'+attr+'" dur="'+dur+'" repeatCount="indefinite" calcMode="spline" keyTimes="'+kt+'" keySplines="'+ks+'" values="'+vals.join(";")+'"/>';
@@ -846,7 +893,10 @@
       inner += '<g opacity=".28">' + props(first, null, "") + body(first, null, "") + '</g>';
       inner += props(last, null, "") + body(last, null, "");
     }else{
-      inner += props(loop[0], loop, "") + body(loop[0], loop, "");
+      let fig = props(loop[0], loop, "") + body(loop[0], loop, "");
+      // o på en stilling gjør figuren usynlig, så den kan gå tilbake uten å synes.
+      if(raw.some(p => p.o != null)) fig = '<g>' + anim("opacity", raw.map(p => p.o == null ? 1 : p.o)) + fig + '</g>';
+      inner += fig;
     }
     if(z !== 1) inner = '<g transform="translate(100 '+FLOOR+') scale('+z+') translate(-100 -'+FLOOR+')">' + inner + '</g>';
     return '<svg class="fig" viewBox="0 0 200 140" aria-hidden="true"><line class="floor" x1="6" y1="'+FLOOR+'" x2="194" y2="'+FLOOR+'"/>' + inner + '</svg>';
@@ -1028,17 +1078,24 @@
     },
     dropphopp: {
       zoom:.74,
-      steps:["Stå på en lav kasse, 20–30 cm.",
-             "Gå ut fra kassen (ikke hopp) og land på begge føttene.",
+      steps:["Stå på en lav kasse, 20–40 cm.",
+             "Gå ut fra kassen (ikke hopp) og land på begge føttene samtidig.",
              "Hopp rett opp igjen så fort du lander, med kortest mulig bakkekontakt."],
-      tip:"Lav kasse er nok. Knærne skal ikke falle innover i landingen. Hvil godt mellom hoppene.",
-      bg: boks(24, 104, 50, 24),
-      dur:2.2,
+      tip:"Riktig høyde er den du hopper høyest fra uten at hælene slår i gulvet. Knærne skal ikke falle innover. Hvil godt mellom hoppene.",
+      bg: boks(20, 104, 50, 24),
+      dur:3.4,
+      // Stå på kassen, gå ut, fall, kort bakkekontakt, eksplosivt opp, myk landing.
+      // Til slutt blekner figuren og dukker opp på kassen igjen.
       poses:[
-        {x:52, ground:104, t:180, l1:[0,0], l2:[0,0], a1:[8,14], a2:[-6,6]},
-        {x:84, ground:104, t:178, lift:6, l1:[30,-10], l2:[0,-6], a1:[30,50], a2:[20,40]},
-        {x:120, t:156, l1:[55,-22], l2:[52,-25], a1:[-35,-15], a2:[-30,-10]},
-        {x:122, t:180, lift:20, l1:[2,-6], l2:[-2,-10], ft1:30, ft2:30, a1:[165,175], a2:[160,170]}
+        {x:56, ground:104, t:180, l1:[0,0], l2:[0,0], a1:[8,14], a2:[-6,6], d:1},
+        {x:68, ground:104, t:176, l1:[40,-4], l2:[0,-2], ft1:110, a1:[-20,-5], a2:[-15,0], d:.7},
+        {x:86, t:178, lift:7, l1:[10,0], l2:[6,-4], ft1:60, ft2:60, a1:[-30,-10], a2:[-25,-5], d:.25},
+        {x:92, t:160, l1:[44,-14], l2:[40,-16], a1:[-40,-25], a2:[-35,-20], d:.3},
+        {x:96, t:182, lift:24, l1:[2,-4], l2:[-2,-8], ft1:30, ft2:30, a1:[165,175], a2:[160,170], d:.55},
+        {x:100, t:150, l1:[64,-22], l2:[60,-24], a1:[60,80], a2:[55,80], d:.6},
+        {x:100, t:180, l1:[0,0], l2:[0,0], a1:[8,14], a2:[-6,6], d:.5},
+        {x:100, t:180, l1:[0,0], l2:[0,0], a1:[8,14], a2:[-6,6], o:0, d:.25},
+        {x:56, ground:104, t:180, l1:[0,0], l2:[0,0], a1:[8,14], a2:[-6,6], o:0, d:.25}
       ]
     },
     skaterhopp: {
@@ -1464,7 +1521,7 @@
 
   function pushCloud(){
     if(cloudTimer){ clearTimeout(cloudTimer); cloudTimer = null; }
-    if(!cloudReady || !member) return Promise.resolve();
+    if(!cloudReady || !member || member.guest) return Promise.resolve();
     const jobs = [];
     if(planDirty){
       planDirty = false;
@@ -1519,6 +1576,17 @@
 
   // Leser skyen, slår sammen og skriver tilbake det som er nyere her.
   function syncCloud(){
+    if(member && member.guest){
+      // Gjesten lagres bare i nettleseren, men får senterprogrammet å prøve seg på.
+      seedGymProgram();
+      syncWindow(state);
+      try{
+        localStorage.setItem(planKey(), JSON.stringify(plan));
+        localStorage.setItem(stateKey(), JSON.stringify(state));
+      }catch(e){}
+      render();
+      return Promise.resolve();
+    }
     if(!member || !navigator.onLine) return Promise.resolve();
     return pullCloud().then(()=>{
       seedGymProgram();
@@ -1629,7 +1697,7 @@
   // Data fra før kontoene kom, lå under nøkler uten medlems-id. Den første
   // som ikke er admin overtar dem på denne enheten.
   function claimLegacyData(){
-    if(member.isAdmin) return;
+    if(member.isAdmin || member.guest) return;
     try{
       if(localStorage.getItem(LEGACY_CLAIMED_KEY)) return;
       const oldPlan  = localStorage.getItem(LEGACY_PLAN_KEY);
@@ -2029,7 +2097,7 @@
   // kommer det ikke tilbake. Admin får det ikke, og det skjer først når skyen
   // er lest, så en ny enhet ikke legger det oppå en plan som finnes fra før.
   function seedGymProgram(){
-    if(!cloudReady || member.isAdmin || plan.gymSeeded) return;
+    if(!(cloudReady || member.guest) || member.isAdmin || plan.gymSeeded) return;
     const program = EXERCISE_BANK.filter(ex => ex.group === "Treningssenter");
     GYM_DAYS.forEach(wd=>{
       const day = planDay(wd);
@@ -2663,6 +2731,7 @@
         ringEl(w.complete, w.planned)
       ])
     ]));
+    if(member.guest) app.appendChild(el("div", {class:"guest-note"}, ["👀 Gjestemodus: alt lagres bare i denne nettleseren."]));
     app.appendChild(renderStreakCard(w));
     app.appendChild(renderPanel(w));
 
@@ -3125,6 +3194,75 @@
     if(logValgt) app.appendChild(renderDayDetail(logValgt));
   }
 
+  /* ---------- Visning: Spenst ----------
+     Korte råd fra forskning på hopptrening (plyometri) for ungdom og
+     håndball. Kildene er oversiktsartikler og kontrollerte forsøk, med DOI. */
+
+  const SPENST_RAD = [
+    {ikon:"📈", tittel:"Hopptrening virker",
+     tekst:"Hopptrening gir målbart høyere hopp, i snitt rundt 8–9 % i svikthopp. Håndballspillere svarer særlig godt.",
+     kilder:[["Markovic 2007", "10.1136/bjsm.2007.035113"], ["Wang mfl. 2024", "10.52082/jssm.2024.177"]]},
+    {ikon:"🗓️", tittel:"To økter i uka, minst 6–8 uker",
+     tekst:"Effekten kommer etter seks uker eller mer med to økter i uka. Programmer på over ni uker gir mer.",
+     kilder:[["Jakšić mfl. 2023", "10.3390/ijerph20032475"], ["Luo mfl. 2025", "10.52082/jssm.2025.406"]]},
+    {ikon:"🔢", tittel:"Lite volum holder",
+     tekst:"Rundt 90–100 hopp i uka er nok for unge, uansett hvor langt de har kommet i puberteten. Korte serier med full pause slår mange hopp i slitne bein.",
+     kilder:[["Ramirez-Campillo mfl. 2023", "10.1186/s40798-023-00568-6"]]},
+    {ikon:"📦", tittel:"Lav kasse på dropphopp",
+     tekst:"20–40 cm er nok. Den beste høyden er den du hopper høyest fra med kort bakkekontakt, og den slo en fast høyde på 30 cm.",
+     kilder:[["Ramirez-Campillo mfl. 2018", "10.1519/JSC.0000000000002467"]]},
+    {ikon:"🏋️", tittel:"Kombiner med styrke",
+     tekst:"Styrketrening som knebøy og utfall gir omtrent like stor gevinst i hopp som hopptrening, og er trygt for unge med god teknikk og tilsyn.",
+     kilder:[["Oliver mfl. 2023", "10.1007/s40279-023-01944-8"], ["Lloyd mfl. 2014", "10.1136/bjsports-2013-092952"]]},
+    {ikon:"🦵", tittel:"God landing beskytter knærne",
+     tekst:"Myk landing med kne over tå. Skadeforebyggende oppvarming tre ganger i uka ga et mer knevennlig muskelmønster hos unge håndballspillere.",
+     kilder:[["Zebis mfl. 2016", "10.1136/bjsports-2015-094776"]]},
+    {ikon:"⚡", tittel:"Hopp mens du er uthvilt",
+     tekst:"Tretthet gir lavere og skjevere hopp. Ta hoppene tidlig i økta, ikke etter løping eller kamp.",
+     kilder:[["Fort-Vanmeerhaeghe mfl. 2023", "10.5114/jhk/174073"]]}
+  ];
+
+  const SPENST_OKT = [
+    ["spensthopp", "3×5"], ["dropphopp", "3×5"], ["skaterhopp", "3×6 per bein"], ["bulgarsk", "3×8 per bein"]
+  ];
+
+  function renderSpenst(app){
+    app.appendChild(el("h1", {class:"title"}, ["Spenst"]));
+    app.appendChild(el("div", {class:"sub"}, ["Hva forskningen sier om å hoppe høyere, for håndball og ungdom."]));
+
+    const okt = el("section", {class:"card spenst-okt"});
+    okt.appendChild(el("h2", {}, ["Forslag til spenstøkt"]));
+    okt.appendChild(el("div", {class:"meta"}, ["Etter 10 minutter oppvarming · to ganger i uka · rundt 50 hopp per økt"]));
+    const ul = el("ul", {class:"okt-list"});
+    SPENST_OKT.forEach(([id, mengde])=>{
+      const b = BANK_BY_ID[id];
+      ul.appendChild(el("li", {}, [
+        el("button", {type:"button", class:"emoji how-btn", "aria-label":"Slik gjør du " + b.name,
+          onclick:()=>{ buzz(8); openHow(b, mengde); }}, [b.emoji]),
+        el("span", {class:"name"}, [b.name]),
+        el("span", {class:"amt"}, [mengde])
+      ]));
+    });
+    okt.appendChild(ul);
+    okt.appendChild(el("div", {class:"okt-hint"}, ["Trykk på en øvelse for å se hvordan den gjøres. Legg dem inn under Plan."]));
+    app.appendChild(okt);
+
+    const liste = el("div", {class:"rad-list"});
+    SPENST_RAD.forEach(r=>{
+      liste.appendChild(el("article", {class:"rad"}, [
+        el("span", {class:"rad-ikon"}, [r.ikon]),
+        el("div", {}, [
+          el("h3", {}, [r.tittel]),
+          el("p", {}, [r.tekst]),
+          el("div", {class:"rad-kilder"}, r.kilder.map(([navn, doi]) =>
+            el("a", {href:"https://doi.org/" + doi, target:"_blank", rel:"noopener"}, [navn + " ↗"])))
+        ])
+      ]));
+    });
+    app.appendChild(liste);
+    app.appendChild(el("footer", {}, [el("span", {}, ["Rådene er hentet fra oversiktsartikler og kontrollerte forsøk i PubMed. Har du vondt, ta en pause og snakk med trener eller fysioterapeut."])]));
+  }
+
   /* ---------- Render ---------- */
 
   function todayIdx(){ return (new Date().getDay() + 6) % 7; }
@@ -3154,6 +3292,7 @@
     app.innerHTML = "";
     if(view === "plan") renderPlan(app);
     else if(view === "log") renderLog(app);
+    else if(view === "spenst") renderSpenst(app);
     else renderTrening(app);
     document.querySelectorAll(".tab").forEach(t=>{
       const on = t.dataset.view === view;
@@ -3178,6 +3317,7 @@
      Samme familiemedlemmer og PIN som i Ukeoppgaver (members-tabellen).
      PIN-en er en enkel sperre mellom søsken, ikke ekte tilgangskontroll. */
 
+  const GUEST = {id:"gjest", name:"Gjest", guest:true};
   let members = [];
   let picked  = null;
   let pinBuf  = "";
@@ -3212,6 +3352,9 @@
         });
         wrap.appendChild(grid);
       }
+      wrap.appendChild(el("button", {type:"button", class:"guest-btn", onclick:()=>{ buzz(8); logIn(GUEST); }}, [
+        "Prøv som gjest", el("small", {}, ["Lagres bare i denne nettleseren"])
+      ]));
     }else{
       wrap.appendChild(el("div", {class:"login-title"}, ["Hei " + picked.name + " – PIN-kode"]));
       const dots = el("div", {class:"pin-dots" + (pinFeil ? " error" : ""), "aria-label": pinBuf.length + " av 4 sifre"});
@@ -3249,12 +3392,12 @@
   }
 
   function logIn(m){
-    try{ localStorage.setItem(MEMBER_KEY, JSON.stringify({id:m.id, name:m.name, isAdmin:!!m.isAdmin})); }catch(e){}
+    try{ localStorage.setItem(MEMBER_KEY, JSON.stringify({id:m.id, name:m.name, isAdmin:!!m.isAdmin, guest:!!m.guest})); }catch(e){}
     enter(m);
   }
 
   function enter(m){
-    member = {id:m.id, name:m.name, isAdmin:!!m.isAdmin};
+    member = {id:m.id, name:m.name, isAdmin:!!m.isAdmin, guest:!!m.guest};
     picked = null; pinBuf = "";
     document.querySelector(".tabbar").hidden = false;
     view = "trening";
@@ -3263,7 +3406,8 @@
   }
 
   function logOut(){
-    if(!confirm("Logge ut " + member.name + " og bytte person?")) return;
+    if(!confirm(member.guest ? "Avslutte gjestemodus? Det du har gjort, blir liggende i denne nettleseren."
+                             : "Logge ut " + member.name + " og bytte person?")) return;
     if(saveTimer){ clearTimeout(saveTimer); persist(); }
     const ut = ()=>{ try{ localStorage.removeItem(MEMBER_KEY); }catch(e){} location.reload(); };
     pushCloud().then(ut, ut);
@@ -3280,6 +3424,7 @@
     rest("members?select=id,name,pin,is_admin,member_order&order=member_order").then(rows=>{
       members = (rows || []).map(r => ({id:r.id, name:r.name, pin:r.pin, isAdmin:!!r.is_admin}));
       if(member){
+        if(member.guest) return;
         const m = members.find(x => x.id === member.id);
         if(!m){ try{ localStorage.removeItem(MEMBER_KEY); }catch(e){} location.reload(); }
         return;
