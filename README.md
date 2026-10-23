@@ -45,6 +45,15 @@ vises med ↪. Den bryter verken rekka eller perfekt uke så lenge det som ble
 flyttet blir gjort (eller fortsatt venter på i dag eller senere). Blir det
 aldri gjort, teller dagen som hoppet over.
 
+## Slik gjør du
+
+Øvelser fra banken har et lite blått **i** på emojien, både i Trening og i
+Plan. Trykk på emojien for å få en kort beskrivelse: en animert strekfigur
+som viser bevegelsen, tre steg og et tips. Trykk på resten av raden huker av
+som før. Figurene er SVG bygd fra ledd og vinkler (`HOW` i `index.html`), og
+står stille med start- og sluttstilling når telefonen har redusert bevegelse
+slått på. Egne øvelser har ingen beskrivelse.
+
 ## Sett
 
 Øvelser med sett i mengden, som `3×15 · 18 kg` eller `6 × 400 m`, får én
