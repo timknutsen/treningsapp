@@ -509,6 +509,48 @@
     background:linear-gradient(160deg,var(--accent),var(--accent-2)); color:#04121f; font:800 .86rem system-ui;
   }
 
+  /* Slik gjør du */
+  .how-btn{
+    appearance:none; background:none; border:none; padding:4px; margin:-4px; cursor:pointer;
+    position:relative; color:inherit; font-family:inherit; border-radius:10px;
+  }
+  .how-btn::after{
+    content:"i"; position:absolute; right:-3px; bottom:-2px; width:14px; height:14px; border-radius:50%;
+    background:var(--accent); color:var(--card); font:800 10px/14px Georgia,serif; font-style:italic; text-align:center;
+    box-shadow:0 0 0 2px var(--card-2);
+  }
+  .how-btn:active{transform:scale(.9)}
+  .pl-row .how-btn{margin-right:2px}
+  .how-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .how-emoji{font-size:1.8rem; line-height:1}
+  .how-meta{color:var(--muted); font-size:.8rem; font-weight:600; margin-top:2px}
+  .how-body{padding-top:14px}
+  .how-fig{background:var(--card-2); border:1px solid var(--line); border-radius:16px; padding:6px; margin-bottom:14px}
+  .fig{display:block; width:100%; height:auto; max-height:240px}
+  .fig .near, .fig .far{fill:none; stroke-linecap:round; stroke-linejoin:round; stroke-width:6}
+  .fig .near{stroke:var(--accent)}
+  .fig .far{stroke:color-mix(in srgb, var(--accent) 40%, transparent)}
+  .fig .hd{fill:var(--accent)}
+  .fig .floor{stroke:var(--line); stroke-width:2}
+  .fig .prop, .fig .cable, .fig .band, .fig .rope, .fig .arrow{
+    fill:none; stroke:var(--muted); stroke-width:3; stroke-linecap:round; stroke-linejoin:round; opacity:.6
+  }
+  .fig .cable{stroke-width:1.5}
+  .fig .rope{stroke-width:2}
+  .fig .arrow{stroke:var(--streak); stroke-width:2; opacity:.9}
+  .how-steps{margin:0 0 12px; padding:0; list-style:none; counter-reset:steg; display:grid; gap:10px}
+  .how-steps li{counter-increment:steg; display:flex; gap:11px; line-height:1.45; font-size:.94rem}
+  .how-steps li::before{
+    content:counter(steg); flex:0 0 auto; width:24px; height:24px; border-radius:50%; margin-top:1px;
+    display:grid; place-items:center; font:800 .76rem system-ui;
+    background:color-mix(in srgb, var(--accent) 16%, transparent); color:var(--accent);
+  }
+  .how-tip{
+    background:color-mix(in srgb, var(--streak-2) 12%, transparent);
+    border:1px solid color-mix(in srgb, var(--streak) 30%, transparent);
+    border-radius:12px; padding:11px 13px; font-size:.86rem; line-height:1.45; margin-bottom:14px;
+  }
+
   /* ---------- Logg ---------- */
   .hero{margin:18px 0 4px; text-align:center}
   .hero-value{font-size:3rem; font-weight:800; letter-spacing:-.035em; line-height:1.05; font-variant-numeric:tabular-nums}
@@ -709,6 +751,584 @@
     if(item.emoji) return item.emoji;
     const b = BANK_BY_NAME[lower(item.name)];
     return b ? b.emoji : CUSTOM_EMOJI;
+  }
+
+  /* ---------- Slik gjør du: beskrivelse og strekfigur ----------
+     Figuren er bygd av ledd og vinkler (0° = rett ned, 90° = fram, 180° = opp),
+     sett fra siden med ansiktet mot høyre. Hver øvelse har to eller flere
+     stillinger som figuren glir mellom. Ledd med mål (f1, w1 …) regnes ut
+     med to-ledds IK, så føtter og hender kan stå fast på en plate eller stang. */
+
+  const SEG = {torso:36, neck:15, head:9, thigh:28, shin:27, upper:20, fore:19, foot:8};
+  const FLOOR = 128;
+
+  function vDir(a){ const r = a*Math.PI/180; return [Math.sin(r), Math.cos(r)]; }
+  function vAdd(p, a, len){ const d = vDir(a); return [p[0]+d[0]*len, p[1]+d[1]*len]; }
+  function vAng(from, to){ return Math.atan2(to[0]-from[0], to[1]-from[1])*180/Math.PI; }
+  // Vinkler for to ledd fra base mot mål. bak=true bøyer leddet bakover (albuer).
+  function ik(base, target, l1, l2, bak){
+    const d = Math.min(Math.hypot(target[0]-base[0], target[1]-base[1]), l1+l2-0.01);
+    const cos = (l1*l1 + d*d - l2*l2) / (2*l1*Math.max(d, 0.01));
+    const off = Math.acos(Math.max(-1, Math.min(1, cos)))*180/Math.PI;
+    const a1 = vAng(base, target) + (bak ? -off : off);
+    return [a1, vAng(vAdd(base, a1, l1), target)];
+  }
+
+  function solvePose(p){
+    const t = p.t == null ? 180 : p.t;
+    const y0 = p.y == null ? 0 : p.y;
+    const P = {hip:[p.x == null ? 100 : p.x, y0]};
+    P.sh   = vAdd(P.hip, t, SEG.torso);
+    P.head = vAdd(P.sh, t + (p.n || 0), SEG.neck);
+    [1,2].forEach(i=>{
+      const l = p["f"+i] ? ik(P.hip, p["f"+i], SEG.thigh, SEG.shin, false) : (p["l"+i] || [0,0]);
+      P["k"+i] = vAdd(P.hip, l[0], SEG.thigh);
+      P["f"+i] = vAdd(P["k"+i], l[1], SEG.shin);
+      const ft = p["ft"+i] != null ? p["ft"+i] : l[1] + 90;
+      P["t"+i] = vAdd(P["f"+i], ft, SEG.foot);
+      const a = p["w"+i] ? ik(P.sh, p["w"+i], SEG.upper, SEG.fore, p.albueFram ? false : true) : (p["a"+i] || [0,0]);
+      P["e"+i] = vAdd(P.sh, a[0], SEG.upper);
+      P["w"+i] = vAdd(P["e"+i], a[1], SEG.fore);
+    });
+    // Uten fast y står figuren på gulvet (eller på p.ground), løftet p.lift.
+    if(p.y == null){
+      let maxY = P.head[1] + SEG.head;
+      ["hip","k1","k2","f1","f2","t1","t2","e1","e2","w1","w2"].forEach(k=>{ maxY = Math.max(maxY, P[k][1]); });
+      const dy = (p.ground || FLOOR) - 3.5 - maxY - (p.lift || 0);
+      Object.keys(P).forEach(k=>{ P[k] = [P[k][0], P[k][1] + dy]; });
+    }
+    return P;
+  }
+
+  const r1 = n => Math.round(n*10)/10;
+  const pts = (P, keys) => keys.map(k => r1(P[k][0]) + "," + r1(P[k][1])).join(" ");
+  const LIMBS = [
+    {cls:"far",  keys:["hip","k2","f2","t2"]},
+    {cls:"far",  keys:["sh","e2","w2"]},
+    {cls:"near", keys:["hip","sh"]},
+    {cls:"near", keys:["hip","k1","f1","t1"]},
+    {cls:"near", keys:["sh","e1","w1"]}
+  ];
+
+  // Én SVG-streng. Uten bevegelse (prefers-reduced-motion) vises første
+  // stilling svakt og siste stilling tydelig.
+  function figureSvg(spec, still){
+    const poses = spec.poses.map(solvePose);
+    const loop  = poses.concat([poses[0]]);
+    const n     = loop.length;
+    const dur   = (spec.dur || 2.4) + "s";
+    const kt    = loop.map((_,i) => (i/(n-1)).toFixed(3)).join(";");
+    const ks    = loop.slice(1).map(()=>"0.45 0 0.55 1").join(";");
+    const anim  = (attr, vals) => still ? "" :
+      '<animate attributeName="'+attr+'" dur="'+dur+'" repeatCount="indefinite" calcMode="spline" keyTimes="'+kt+'" keySplines="'+ks+'" values="'+vals.join(";")+'"/>';
+
+    function body(P, Ps, extraCls){
+      let s = "";
+      LIMBS.forEach(L=>{
+        s += '<polyline class="'+L.cls+extraCls+'" points="'+pts(P, L.keys)+'">' + (Ps ? anim("points", Ps.map(Q => pts(Q, L.keys))) : "") + '</polyline>';
+      });
+      s += '<circle class="hd'+extraCls+'" r="'+SEG.head+'" cx="'+r1(P.head[0])+'" cy="'+r1(P.head[1])+'">' +
+        (Ps ? anim("cx", Ps.map(Q=>r1(Q.head[0]))) + anim("cy", Ps.map(Q=>r1(Q.head[1]))) : "") + '</circle>';
+      return s;
+    }
+    function props(P, Ps, extraCls){
+      return (spec.att || []).map(a=>{
+        const d = a.d(P);
+        return '<path class="'+(a.cls || "prop")+extraCls+'" d="'+d+'">' + (Ps ? anim("d", Ps.map(Q => a.d(Q))) : "") + '</path>';
+      }).join("");
+    }
+
+    // Høye figurer (armer over hodet, hopp) krympes rundt gulvet så hodet får plass.
+    const z = spec.zoom || 1;
+    let inner = (spec.bg || "");
+    if(still){
+      const first = poses[0], last = poses[poses.length > 2 ? Math.floor(poses.length/2) : poses.length-1];
+      inner += '<g opacity=".28">' + props(first, null, "") + body(first, null, "") + '</g>';
+      inner += props(last, null, "") + body(last, null, "");
+    }else{
+      inner += props(loop[0], loop, "") + body(loop[0], loop, "");
+    }
+    if(z !== 1) inner = '<g transform="translate(100 '+FLOOR+') scale('+z+') translate(-100 -'+FLOOR+')">' + inner + '</g>';
+    return '<svg class="fig" viewBox="0 0 200 140" aria-hidden="true"><line class="floor" x1="6" y1="'+FLOOR+'" x2="194" y2="'+FLOOR+'"/>' + inner + '</svg>';
+  }
+
+  // Hjelpere for utstyr som følger leddene.
+  const hantel = j => P => { const [x,y] = P[j]; return "M"+r1(x-7)+","+r1(y)+" L"+r1(x+7)+","+r1(y)+" M"+r1(x-7)+","+r1(y-4)+" L"+r1(x-7)+","+r1(y+4)+" M"+r1(x+7)+","+r1(y-4)+" L"+r1(x+7)+","+r1(y+4); };
+  const strek = (a, b) => P => "M"+r1(P[a][0])+","+r1(P[a][1])+" L"+r1(P[b][0])+","+r1(P[b][1]);
+  const tilPunkt = (j, x, y) => P => "M"+r1(P[j][0])+","+r1(P[j][1])+" L"+x+","+y;
+  const sirkel = (cx, cy, r) => '<circle class="prop" cx="'+cx+'" cy="'+cy+'" r="'+r+'"/>';
+  const boks = (x, y, w, h) => '<rect class="prop" x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="3"/>';
+  const bue = (cx, cy) => '<path class="arrow" d="M'+(cx-22)+','+(cy+4)+' Q'+cx+','+(cy+20)+' '+(cx+22)+','+(cy+4)+'"/>' +
+    '<path class="arrow" d="M'+(cx-22)+','+(cy+4)+' l2,-8 M'+(cx-22)+','+(cy+4)+' l8,1 M'+(cx+22)+','+(cy+4)+' l-2,-8 M'+(cx+22)+','+(cy+4)+' l-8,1"/>';
+  const sete = (x, y) => '<path class="prop" d="M'+(x-18)+','+y+' L'+(x+16)+','+y+' M'+x+','+y+' L'+x+','+FLOOR+'"/>';
+
+  const STAA  = {t:180, l1:[0,0], l2:[0,0], a1:[8,14], a2:[-6,6]};
+  const KNEBOY = {t:142, l1:[82,-22], l2:[78,-26]};
+  const lop = (lean, amp) => [
+    {t:180-lean, lift:3, l1:[40*amp,-10*amp], l2:[-30*amp,-95*amp], a1:[-45*amp,60*amp], a2:[45*amp,150*amp]},
+    {t:180-lean, lift:3, l1:[-30*amp,-95*amp], l2:[40*amp,-10*amp], a1:[45*amp,150*amp], a2:[-45*amp,60*amp]}
+  ];
+  const HENG = {t:180, l1:[18,-30], l2:[10,-40]};
+
+  const HOW = {
+    ts_legpress: {
+      steps:["Sitt med ryggen godt inntil og føttene midt på platen, i hoftebreddes avstand.",
+             "Senk platen rolig til knærne er omtrent 90 grader.",
+             "Press fra med hele foten til beina er nesten strake."],
+      tip:"Ikke lås knærne helt i toppen, og la knærne peke samme vei som tærne.",
+      bg:'<path class="prop" d="M40,64 L70,104 L104,104 L104,'+FLOOR+'"/>',
+      att:[{d:P=>"M"+r1(P.t1[0]+3)+","+r1(P.t1[1]-18)+" L"+r1(P.t1[0]+3)+","+r1(P.t1[1]+12)}],
+      poses:[
+        {x:76, y:100, t:220, f1:[124,76], f2:[121,79], ft1:150, ft2:150, a1:[10,60], a2:[0,60]},
+        {x:76, y:100, t:220, f1:[150,82], f2:[147,85], ft1:150, ft2:150, a1:[10,60], a2:[0,60]}
+      ]
+    },
+    ts_pulldown: {
+      steps:["Sett deg med lårene under puten og ta et bredt grep på stanga.",
+             "Trekk stanga ned til øvre del av brystet, med albuene ned og litt bak.",
+             "Slipp den kontrollert opp igjen til armene er strake."],
+      tip:"Hold brystet oppe og ikke dra med ryggen. Stanga skal foran hodet, ikke bak nakken.",
+      bg: sete(96, 104) + '<path class="prop" d="M112,88 L132,88"/>',
+      att:[{d:P=>"M"+r1(P.w1[0]-24)+","+r1(P.w1[1])+" L"+r1(P.w1[0]+24)+","+r1(P.w1[1])},
+           {cls:"cable", d:P=>"M"+r1(P.w1[0])+","+r1(P.w1[1])+" L"+r1(P.w1[0])+",4"}],
+      poses:[
+        {x:96, y:100, t:186, l1:[90,0], l2:[88,2], w1:[106,22], w2:[103,22], albueFram:true},
+        {x:96, y:100, t:192, l1:[90,0], l2:[88,2], w1:[108,62], w2:[105,62], albueFram:false}
+      ]
+    },
+    ts_chestpress: {
+      steps:["Still setet så håndtakene er i brysthøyde, og sitt med ryggen inntil.",
+             "Press håndtakene rett fram til armene er nesten strake.",
+             "Før dem rolig tilbake til du kjenner en lett strekk i brystet."],
+      tip:"Pust ut når du presser. Hold skuldrene nede, borte fra ørene.",
+      bg: sete(92, 104) + '<path class="prop" d="M80,104 L80,52"/>',
+      att:[{d:P=>"M"+r1(P.w1[0])+","+r1(P.w1[1]-7)+" L"+r1(P.w1[0])+","+r1(P.w1[1]+7)}],
+      poses:[
+        {x:92, y:100, t:180, l1:[90,0], l2:[88,2], w1:[108,72], w2:[105,72]},
+        {x:92, y:100, t:180, l1:[90,0], l2:[88,2], w1:[130,72], w2:[127,72]}
+      ]
+    },
+    ts_legext: {
+      steps:["Sett deg med knærne ved kanten av setet og puten foran anklene.",
+             "Strekk beina til de er nesten strake, og hold et lite øyeblikk.",
+             "Senk rolig ned igjen."],
+      tip:"Rolig tempo uten slenging. Hold rumpa nede i setet.",
+      bg: sete(88, 104) + '<path class="prop" d="M74,104 L74,54"/>',
+      att:[{d:P=>{ const [x,y]=P.f1; return "M"+r1(x+5)+","+r1(y)+" a5,5 0 1,0 0.1,0"; }}],
+      poses:[
+        {x:88, y:100, t:180, l1:[90,-8], l2:[90,-8], a1:[10,40], a2:[0,40]},
+        {x:88, y:100, t:180, l1:[92,84], l2:[92,84], a1:[10,40], a2:[0,40]}
+      ]
+    },
+    ts_midjerot: {
+      steps:["Sett deg med rett rygg og føttene eller knærne låst fast.",
+             "Vri overkroppen rolig til siden så langt det er behagelig.",
+             "Gå kontrollert tilbake til midten. Ta like mange til hver side."],
+      tip:"Bevegelsen skal komme fra midjen, ikke fra armene. Lav vekt og rolig tempo.",
+      bg: sete(96, 104) + bue(100, 74),
+      poses:[
+        {x:96, y:100, t:180, l1:[90,0], l2:[88,2], a1:[75,120], a2:[95,100]},
+        {x:96, y:100, t:180, l1:[90,0], l2:[88,2], a1:[95,100], a2:[75,120]}
+      ]
+    },
+    ts_seatedrow: {
+      steps:["Sitt med rett rygg, føttene mot fotstøtten og lett bøy i knærne.",
+             "Trekk håndtaket inn mot magen og klem skulderbladene sammen.",
+             "Strekk armene rolig fram igjen uten å runde ryggen."],
+      tip:"Overkroppen står stille. Det er armene og ryggen som gjør jobben.",
+      bg: sete(72, 108) + '<path class="prop" d="M136,96 L136,'+FLOOR+'"/>',
+      att:[{cls:"cable", d:P=>"M"+r1(P.w1[0])+","+r1(P.w1[1])+" L190,"+r1(P.w1[1])},
+           {d:P=>"M"+r1(P.w1[0])+","+r1(P.w1[1]-7)+" L"+r1(P.w1[0])+","+r1(P.w1[1]+7)}],
+      poses:[
+        {x:72, y:104, t:172, f1:[132,108], f2:[130,110], ft1:170, ft2:170, w1:[124,80], w2:[121,80]},
+        {x:72, y:104, t:184, f1:[132,108], f2:[130,110], ft1:170, ft2:170, w1:[86,86], w2:[83,86]}
+      ]
+    },
+    ts_backext: {
+      steps:["Legg hoftene mot kanten av puten og hekt føttene fast.",
+             "Senk overkroppen rolig ned med rett rygg.",
+             "Løft opp til kroppen er i en rett linje, ikke lenger."],
+      tip:"Ikke svai i toppen. Kryss armene over brystet.",
+      bg:'<path class="prop" d="M48,118 L104,72 M76,96 L76,'+FLOOR+' M44,126 L56,114"/>',
+      poses:[
+        {x:100, y:68, t:15, l1:[-50,-50], l2:[-48,-48], ft1:40, ft2:40, a1:[190,175], a2:[188,173]},
+        {x:100, y:68, t:130, l1:[-50,-50], l2:[-48,-48], ft1:40, ft2:40, a1:[-55,-70], a2:[-57,-72]}
+      ]
+    },
+
+    spensthopp: {
+      zoom:.74,
+      steps:["Stå med føttene i hoftebreddes avstand.",
+             "Gå ned i en halv knebøy og sving armene bak.",
+             "Eksploder rett opp, sving armene opp, og land mykt på forfoten med bøyde knær."],
+      tip:"Land stille og kontrollert, med knærne rett over tærne. Kvalitet foran antall.",
+      dur:1.6,
+      poses:[
+        {t:150, l1:[70,-25], l2:[66,-28], a1:[-40,-20], a2:[-35,-15]},
+        {t:180, lift:20, l1:[2,-6], l2:[-2,-10], ft1:30, ft2:30, a1:[165,175], a2:[160,170]}
+      ]
+    },
+    utfall: {
+      steps:["Stå med en vekt i hver hånd og armene ned langs siden.",
+             "Ta et langt steg fram og senk deg til bakre kne nesten treffer gulvet.",
+             "Press fra med fremre fot tilbake til start. Bytt bein."],
+      tip:"Fremre kne over foten, ikke innover. Hold overkroppen oppreist.",
+      att:[{d:hantel("w1")}],
+      poses:[
+        Object.assign({}, STAA, {a1:[0,0], a2:[0,0]}),
+        {t:180, l1:[88,0], l2:[-24,-82], ft2:-20, a1:[0,0], a2:[0,0]}
+      ]
+    },
+    knebøy: {
+      steps:["Stå med føttene litt bredere enn hoftene og tærne litt ut.",
+             "Sett deg bakover og ned som på en stol, til lårene er vannrette.",
+             "Press opp gjennom hælene til du står rett."],
+      tip:"Hold ryggen rett og knærne i samme retning som tærne.",
+      poses:[
+        Object.assign({}, STAA, {a1:[90,90], a2:[88,90]}),
+        Object.assign({}, KNEBOY, {a1:[100,94], a2:[98,94]})
+      ]
+    },
+    bulgarsk: {
+      steps:["Stå et langt steg foran en benk og legg bakre fot oppå.",
+             "Senk deg rett ned til fremre lår er vannrett.",
+             "Press opp med fremre bein. Ta alle på ett bein, så bytt."],
+      tip:"Det meste av vekten skal ligge på fremre bein. Hold overkroppen rett.",
+      bg: boks(22, 96, 40, 8) + '<path class="prop" d="M30,104 L30,'+FLOOR+' M54,104 L54,'+FLOOR+'"/>',
+      poses:[
+        {x:96, y:66, t:180, f1:[108,121], f2:[56,92], ft2:-100, ft1:90, a1:[0,0], a2:[0,0]},
+        {x:92, y:88, t:172, f1:[112,121], f2:[56,92], ft2:-100, ft1:90, a1:[10,10], a2:[10,10]}
+      ]
+    },
+    tåhev: {
+      steps:["Stå med føttene i hoftebreddes avstand, gjerne med forfoten på en kant.",
+             "Løft deg opp på tærne så høyt du kommer.",
+             "Senk rolig ned igjen."],
+      tip:"Hold et lite øyeblikk i toppen. Hold i noe for balansen.",
+      dur:1.6,
+      poses:[
+        Object.assign({}, STAA),
+        Object.assign({}, STAA, {ft1:40, ft2:40})
+      ]
+    },
+    bokshopp: {
+      zoom:.74,
+      steps:["Stå en halv meter foran en stødig kasse.",
+             "Sving armene bak, bøy knærne og hopp opp.",
+             "Land mykt med hele foten på kassen, rett deg opp og gå ned igjen."],
+      tip:"Gå ned, ikke hopp ned. Velg en høyde du lander trygt på.",
+      bg: boks(118, 96, 56, 32),
+      dur:2.2,
+      poses:[
+        {x:84, t:150, l1:[70,-25], l2:[66,-28], a1:[-40,-20], a2:[-35,-15]},
+        {x:116, t:175, lift:36, l1:[40,-30], l2:[36,-34], a1:[150,165], a2:[145,160]},
+        {x:144, ground:96, t:150, l1:[70,-25], l2:[66,-28], a1:[60,80], a2:[55,80]},
+        {x:144, ground:96, t:180, l1:[0,0], l2:[0,0], a1:[8,14], a2:[-6,6]}
+      ]
+    },
+    dropphopp: {
+      zoom:.74,
+      steps:["Stå på en lav kasse, 20–30 cm.",
+             "Gå ut fra kassen (ikke hopp) og land på begge føttene.",
+             "Hopp rett opp igjen så fort du lander, med kortest mulig bakkekontakt."],
+      tip:"Lav kasse er nok. Knærne skal ikke falle innover i landingen. Hvil godt mellom hoppene.",
+      bg: boks(24, 104, 50, 24),
+      dur:2.2,
+      poses:[
+        {x:52, ground:104, t:180, l1:[0,0], l2:[0,0], a1:[8,14], a2:[-6,6]},
+        {x:84, ground:104, t:178, lift:6, l1:[30,-10], l2:[0,-6], a1:[30,50], a2:[20,40]},
+        {x:120, t:156, l1:[55,-22], l2:[52,-25], a1:[-35,-15], a2:[-30,-10]},
+        {x:122, t:180, lift:20, l1:[2,-6], l2:[-2,-10], ft1:30, ft2:30, a1:[165,175], a2:[160,170]}
+      ]
+    },
+    skaterhopp: {
+      zoom:.8,
+      steps:["Stå på ett bein med lett bøyd kne.",
+             "Hopp sideveis over til det andre beinet, som en skøyteløper.",
+             "Land mykt og stå stille et øyeblikk før neste hopp."],
+      tip:"Kne over tå i landingen. Gjør hoppene lengre etter hvert som balansen sitter.",
+      front:true,
+      dur:2,
+      poses:[
+        {x:62, t:170, l1:[8,-2], l2:[38,-50], ft1:90, ft2:-90, a1:[60,95], a2:[-30,-20]},
+        {x:100, t:180, lift:22, l1:[20,-10], l2:[-20,10], ft1:90, ft2:-90, a1:[80,120], a2:[-80,-120]},
+        {x:138, t:190, l1:[-38,50], l2:[-8,2], ft1:90, ft2:-90, a1:[30,20], a2:[-60,-95]},
+        {x:100, t:180, lift:22, l1:[20,-10], l2:[-20,10], ft1:90, ft2:-90, a1:[80,120], a2:[-80,-120]}
+      ]
+    },
+
+    pushups: {
+      steps:["Hendene litt bredere enn skuldrene og kroppen rett fra hode til hæler.",
+             "Senk brystet mot gulvet med albuene skrått bakover.",
+             "Press opp til armene er strake."],
+      tip:"Ikke la hoftene henge. For tungt? Ta dem på knærne.",
+      poses:[
+        {x:84, y:94, t:107, l1:[-73,-73], l2:[-74,-74], ft1:0, ft2:0, w1:[110,124], w2:[107,124]},
+        {x:84, y:119, t:96, l1:[-83,-83], l2:[-84,-84], ft1:0, ft2:0, a1:[-120,15], a2:[-122,13]}
+      ]
+    },
+    hangups: {
+      zoom:.8,
+      steps:["Heng i stanga med overhåndsgrep, litt bredere enn skuldrene.",
+             "Trekk deg opp til haka er over stanga.",
+             "Senk deg rolig helt ned."],
+      tip:"Ikke sving med beina. Klarer du ikke å komme opp, hopp opp og senk deg sakte.",
+      bg:'<path class="prop" d="M40,14 L170,14"/>',
+      poses:[
+        Object.assign({x:104, y:84, w1:[106,14], w2:[103,14]}, HENG),
+        Object.assign({x:98, y:52, w1:[106,14], w2:[103,14], albueFram:true}, HENG)
+      ]
+    },
+    chinups: {
+      zoom:.8,
+      steps:["Heng i stanga med underhåndsgrep (håndflatene mot deg), i skulderbredde.",
+             "Trekk deg opp til haka er over stanga.",
+             "Senk deg rolig helt ned."],
+      tip:"Ikke sving med beina. Klarer du ikke å komme opp, hopp opp og senk deg sakte.",
+      bg:'<path class="prop" d="M40,14 L170,14"/>',
+      poses:[
+        Object.assign({x:104, y:84, w1:[106,14], w2:[103,14]}, HENG),
+        Object.assign({x:98, y:52, w1:[106,14], w2:[103,14], albueFram:true}, HENG)
+      ]
+    },
+    dips: {
+      steps:["Støtt deg på to stenger (eller en benk) med strake armer.",
+             "Senk deg til albuene er omtrent 90 grader.",
+             "Press deg opp igjen."],
+      tip:"Albuene peker bakover. Ikke gå dypere enn det kjennes bra i skuldrene.",
+      bg:'<path class="prop" d="M70,72 L150,72 M80,72 L80,'+FLOOR+' M140,72 L140,'+FLOOR+'"/>',
+      poses:[
+        {x:104, y:68, t:176, l1:[20,-60], l2:[14,-64], w1:[110,72], w2:[108,72]},
+        {x:100, y:88, t:160, l1:[30,-50], l2:[24,-54], w1:[110,72], w2:[108,72]}
+      ]
+    },
+    skulderpress: {
+      zoom:.8,
+      steps:["Hold vektene i skulderhøyde med håndflatene fram.",
+             "Press rett opp til armene er strake over hodet.",
+             "Senk rolig tilbake til skuldrene."],
+      tip:"Stram magen og ikke svai i ryggen.",
+      att:[{d:hantel("w1")}],
+      poses:[
+        Object.assign({}, STAA, {a1:[40,175], a2:[35,175]}),
+        Object.assign({}, STAA, {a1:[172,178], a2:[170,178]})
+      ]
+    },
+    roing_strikk: {
+      steps:["Sitt med strake bein og strikken rundt føttene.",
+             "Trekk hendene inn mot magen og klem skulderbladene sammen.",
+             "Slipp rolig fram igjen."],
+      tip:"Sitt rett, og hold albuene tett inntil kroppen.",
+      att:[{cls:"band", d:strek("t1","w1")}],
+      poses:[
+        {x:66, t:170, l1:[88,92], l2:[88,92], ft1:170, ft2:170, a1:[78,86], a2:[76,86]},
+        {x:66, t:182, l1:[88,92], l2:[88,92], ft1:170, ft2:170, a1:[-30,94], a2:[-32,94]}
+      ]
+    },
+
+    legraise: {
+      steps:["Ligg på ryggen med armene langs siden.",
+             "Løft strake bein opp til de peker mot taket.",
+             "Senk sakte ned uten at beina treffer gulvet."],
+      tip:"Press korsryggen ned i gulvet. Bøy litt i knærne hvis det er for tungt.",
+      poses:[
+        {x:100, t:-90, l1:[84,88], l2:[84,88], ft1:180, ft2:180, a1:[90,90], a2:[90,90]},
+        {x:100, t:-90, l1:[175,178], l2:[175,178], ft1:90, ft2:90, a1:[90,90], a2:[90,90]}
+      ]
+    },
+    hold90: {
+      steps:["Ligg på ryggen og løft beina så hofter og knær er 90 grader.",
+             "Press korsryggen ned i gulvet og stram magen.",
+             "Hold stillingen og pust rolig."],
+      tip:"Korsryggen skal ikke slippe gulvet. Det er hele poenget.",
+      dur:3,
+      poses:[
+        {x:100, t:-90, l1:[178,90], l2:[178,90], ft1:180, ft2:180, a1:[90,90], a2:[90,90]},
+        {x:100, t:-90, l1:[172,86], l2:[172,86], ft1:180, ft2:180, a1:[90,90], a2:[90,90]}
+      ]
+    },
+    planke: {
+      steps:["Albuene rett under skuldrene og underarmene i gulvet.",
+             "Løft hoftene så kroppen er rett fra hode til hæler.",
+             "Hold stillingen og pust rolig."],
+      tip:"Ikke la hoftene henge eller stikke opp. Stram rumpe og mage.",
+      dur:3,
+      poses:[
+        {x:94, t:98, l1:[-82,-82], l2:[-83,-83], ft1:0, ft2:0, a1:[0,90], a2:[0,90]},
+        {x:94, t:99, lift:1.5, l1:[-81,-81], l2:[-82,-82], ft1:0, ft2:0, a1:[0,90], a2:[0,90]}
+      ]
+    },
+    sideplanke: {
+      steps:["Ligg på siden med albuen rett under skulderen.",
+             "Løft hoftene så kroppen danner en rett linje.",
+             "Hold, og bytt side."],
+      tip:"Skyv hoftene fram, ikke bak. Bøy nederste kne for en lettere variant.",
+      front:true,
+      dur:3,
+      poses:[
+        {x:94, t:112, l1:[-72,-72], l2:[-70,-70], ft1:0, ft2:0, a1:[0,90], a2:[160,10]},
+        {x:94, t:110, lift:2, l1:[-70,-70], l2:[-68,-68], ft1:0, ft2:0, a1:[0,90], a2:[175,180]}
+      ]
+    },
+    ryggenhev: {
+      steps:["Ligg på magen med armene strake fram.",
+             "Løft armer, bryst og bein litt fra gulvet.",
+             "Hold stillingen og pust rolig."],
+      tip:"Se ned i gulvet så nakken er rett. Små løft er nok.",
+      dur:2.6,
+      poses:[
+        {x:96, t:90, l1:[-90,-90], l2:[-90,-90], ft1:0, ft2:0, a1:[90,90], a2:[90,90]},
+        {x:96, t:104, l1:[-102,-104], l2:[-100,-102], ft1:-14, ft2:-14, a1:[112,114], a2:[110,112]}
+      ]
+    },
+    russiantwist: {
+      steps:["Sitt med bøyde knær og len deg litt bakover med rett rygg.",
+             "Løft føttene fra gulvet hvis du klarer.",
+             "Vri overkroppen fra side til side og før hendene ned mot gulvet."],
+      tip:"Det er overkroppen som vrir, ikke bare armene.",
+      bg: bue(96, 70),
+      dur:1.8,
+      poses:[
+        {x:80, t:205, l1:[130,70], l2:[128,70], ft1:140, ft2:140, a1:[110,60], a2:[95,70]},
+        {x:80, t:205, l1:[130,70], l2:[128,70], ft1:140, ft2:140, a1:[80,40], a2:[70,30]}
+      ]
+    },
+    situps: {
+      steps:["Ligg på ryggen med bøyde knær og føttene i gulvet.",
+             "Rull opp til du sitter, med armene fram mot knærne.",
+             "Rull rolig ned igjen."],
+      tip:"Ikke dra i nakken. La magen gjøre jobben.",
+      poses:[
+        {x:96, y:124, t:-88, f1:[134,124], f2:[131,124], a1:[95,95], a2:[95,95]},
+        {x:96, y:124, t:150, f1:[134,124], f2:[131,124], a1:[100,100], a2:[98,98]}
+      ]
+    },
+    mountain: {
+      steps:["Start i armhevingsstilling med strake armer.",
+             "Dra det ene kneet fram mot brystet, og bytt raskt.",
+             "Hold hoftene lave og skuldrene over hendene."],
+      tip:"Raskt tempo, men kroppen skal være stø.",
+      dur:1,
+      poses:[
+        {x:84, y:94, t:107, l1:[40,-60], l2:[-73,-73], ft1:-30, ft2:0, w1:[120,124], w2:[117,124]},
+        {x:84, y:94, t:107, l1:[-73,-73], l2:[40,-60], ft1:0, ft2:-30, w1:[120,124], w2:[117,124]}
+      ]
+    },
+
+    loping: {
+      steps:["Løp i et tempo der du klarer å prate.",
+             "Ta korte steg og land med foten under kroppen.",
+             "Slapp av i skuldrene og la armene svinge fram og tilbake."],
+      tip:"Øk distansen gradvis, høyst 10 % i uka.",
+      dur:1, poses: lop(10, 1)
+    },
+    intervaller: {
+      steps:["Varm opp 10 minutter med rolig jogg.",
+             "Løp hvert drag hardt, men jevnt. Siste drag skal gå like fort som det første.",
+             "Gå eller jogg 1–2 minutter mellom dragene."],
+      tip:"Hardt, men ikke maks. Klarer du ikke siste drag, startet du for fort.",
+      dur:.7, poses: lop(16, 1.2)
+    },
+    joggetur: {
+      steps:["Jogg så rolig at du kan prate hele veien.",
+             "Pust rolig og slapp av i kroppen.",
+             "Avslutt med noen minutter gange."],
+      tip:"Rolige turer bygger kondisjon. Det skal føles lett.",
+      dur:1.3, poses: lop(6, .7)
+    },
+    sykling: {
+      steps:["Still setet så beinet er nesten strakt i nederste tråkk.",
+             "Tråkk jevnt, med høy frekvens og lett gir.",
+             "Hold et tempo du klarer hele turen."],
+      tip:"Bruk hjelm.",
+      bg: sirkel(54, 106, 21) + sirkel(150, 106, 21) +
+        '<path class="prop" d="M54,106 L98,106 L84,68 M98,106 L136,70 L84,70 M150,106 L136,70 L134,60 L142,58 M78,66 L92,66"/>',
+      dur:1.2,
+      poses:[0,90,180,270].map(g=>{
+        const c = vAdd([98,106], g, 10), d = vAdd([98,106], g+180, 10);
+        return {x:86, y:64, t:122, f1:c, f2:d, w1:[138,59], w2:[135,59], albueFram:false};
+      })
+    },
+    hopptau: {
+      zoom:.8,
+      steps:["Hold tauet med hendene ved hoftene.",
+             "Snurr tauet med håndleddene, ikke med hele armene.",
+             "Hopp lavt på forfoten, akkurat høyt nok til at tauet går under."],
+      tip:"Start med korte runder, og ta en pause når du trår feil.",
+      dur:.9,
+      att:[{cls:"rope", d:P=>{ const [x,y] = P.w1, hy = P.head[1] - 30;
+        const ny = y + ((P.t1[1] > FLOOR - 10 ? hy : FLOOR + 3) - y) * 4/3;
+        return "M"+r1(x)+","+r1(y)+" C"+r1(x+44)+","+r1(ny)+" "+r1(x-44)+","+r1(ny)+" "+r1(x-2)+","+r1(y); }}],
+      poses:[
+        {t:180, l1:[4,-6], l2:[-2,-10], ft1:30, ft2:30, a1:[20,90], a2:[14,90]},
+        {t:180, lift:10, l1:[4,-6], l2:[-2,-10], ft1:30, ft2:30, a1:[20,90], a2:[14,90]}
+      ]
+    },
+    romaskin: {
+      steps:["Start med bøyde knær, strake armer og lent litt fram.",
+             "Skyv med beina først, len deg så litt bak og trekk håndtaket inn mot magen.",
+             "Gå tilbake i motsatt rekkefølge: armer, overkropp, bein."],
+      tip:"Bein, rygg, armer. Det meste av kraften kommer fra beina.",
+      bg:'<path class="prop" d="M20,120 L170,120 M150,120 L150,96 L172,96 L172,120"/>' + sirkel(162, 92, 12),
+      att:[{cls:"cable", d:tilPunkt("w1", 156, 92)}],
+      dur:2.6,
+      poses:[
+        {x:78, y:116, t:160, f1:[134,114], f2:[132,116], ft1:160, ft2:160, w1:[128,86], w2:[125,86]},
+        {x:58, y:116, t:198, f1:[134,114], f2:[132,116], ft1:160, ft2:160, w1:[72,92], w2:[69,92]}
+      ]
+    }
+  };
+
+  // Bankøvelsen bak en øvelse i planen (exId) eller en dag (navn).
+  function bankFor(x){
+    return (x.exId && BANK_BY_ID[x.exId]) || BANK_BY_NAME[lower(x.name)] || null;
+  }
+  function howFor(x){
+    const b = bankFor(x);
+    return b && HOW[b.id] ? b : null;
+  }
+
+  // Emojien blir en knapp med et lite i-merke når øvelsen har en beskrivelse.
+  function emojiEl(x, emoji, amount){
+    const b = howFor(x);
+    if(!b) return el("span", {class:"emoji"}, [emoji]);
+    return el("button", {type:"button", class:"emoji how-btn", "aria-label":"Slik gjør du " + b.name,
+      onclick:(e)=>{ e.stopPropagation(); buzz(8); openHow(b, amount); }}, [emoji]);
+  }
+
+  function openHow(b, amount){
+    const how = HOW[b.id];
+    const overlay = el("div", {class:"sheet-overlay"});
+    const sheet   = el("div", {class:"sheet how-sheet", role:"dialog", "aria-modal":"true", "aria-label":"Slik gjør du " + b.name,
+      onclick:(e)=>e.stopPropagation()});
+    function close(){ overlay.remove(); document.removeEventListener("keydown", onKey); }
+    function onKey(e){ if(e.key === "Escape") close(); }
+    overlay.addEventListener("click", close);
+    document.addEventListener("keydown", onKey);
+
+    const meta = [amount || b.amount];
+    if(b.machine) meta.push("Apparat " + b.machine);
+    sheet.appendChild(el("div", {class:"sheet-head"}, [
+      el("div", {class:"sheet-title", style:"margin-bottom:0"}, [
+        el("span", {class:"how-emoji"}, [b.emoji]),
+        el("div", {style:"flex:1; min-width:0"}, [
+          el("h2", {}, [b.name]),
+          el("div", {class:"how-meta"}, [meta.join(" · ")])
+        ]),
+        el("button", {type:"button", class:"x-btn", "aria-label":"Lukk", onclick:close}, ["✕"])
+      ])
+    ]));
+
+    const body = el("div", {class:"sheet-body how-body"});
+    body.appendChild(el("div", {class:"how-fig", html: figureSvg(how, reduceMotion)}));
+    const ol = el("ol", {class:"how-steps"});
+    how.steps.forEach(s => ol.appendChild(el("li", {}, [s])));
+    body.appendChild(ol);
+    if(how.tip) body.appendChild(el("div", {class:"how-tip"}, [el("b", {}, ["💡 Tips"]), " ", how.tip]));
+    body.appendChild(el("button", {type:"button", class:"cta", onclick:close}, ["Skjønner"]));
+    sheet.appendChild(body);
+    overlay.appendChild(sheet);
+    document.body.appendChild(overlay);
   }
 
   /* ---------- Lagring ---------- */
@@ -1887,7 +2507,7 @@
       tabindex: locked ? null : "0"
     });
     li.appendChild(el("span", {class:"check", html:CHECK_SVG}));
-    li.appendChild(el("span", {class:"emoji"}, [itemEmoji(item)]));
+    li.appendChild(emojiEl(item, itemEmoji(item), item.amount));
     const label = el("span", {class:"label"}, [el("span", {class:"name"}, [item.name])]);
     const notes = [];
     if(itemNote(item)) notes.push(itemNote(item));
@@ -2321,7 +2941,7 @@
         amt.addEventListener("change", ()=>setAmount(wd, idx, amt.value));
         amt.addEventListener("keydown", e=>{ if(e.key === "Enter") amt.blur(); });
         ul.appendChild(el("li", {class:"pl-row"}, [
-          el("span", {class:"emoji"}, [exEmoji(ex)]),
+          emojiEl(ex, exEmoji(ex), ex.amount),
           el("span", {class:"label"}, [
             el("span", {class:"name"}, [exName(ex)]),
             exNote(ex) ? el("span", {class:"note"}, [exNote(ex)]) : null
