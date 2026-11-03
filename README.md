@@ -15,9 +15,22 @@ apparatprogrammet fra treningssenteret inne på mandag og torsdag.
 - **Plan** — velg en ukedag, legg til øvelser fra banken (eller en egen),
   juster mengde (trykk på mengden for rullehjul med sett, antall, enhet og
   vekt) og antall runder. Tomme dager er hviledager. Velgeren blir
-  stående åpen, så flere øvelser kan legges til på rad
-- **Logg** — antall økter, rekke, rekord og en månedskalender. Trykk på en
-  dag for å se hva som ble gjort
+  stående åpen, så flere øvelser kan legges til på rad. Trykk på navnet til
+  en øvelse for å endre mengde (og navn på egne øvelser), flytte den opp
+  eller ned, legge den til eller ta den bort på andre dager, eller slette
+  den. «Kopier dagen …» kopierer hele dagen til andre dager. Alt som
+  fjerner noe fra planen (✕, slett, hviledag, kopier over, begynn på nytt)
+  kan angres i noen sekunder etterpå
+- **Begynn på nytt** (nederst i Plan) — velg tom plan eller
+  senterprogrammet. Loggen blir stående, med mindre «Slett loggen også» er
+  krysset av: da slettes alle økter, rekka og vekthistorikken, også i skyen.
+  Planen får et tidsstempel (`resetAt`), så andre enheter og gamle rader i
+  skyen ikke tar loggen tilbake
+- **Logg** — antall økter, rekke og rekord, økter per uke de siste åtte
+  ukene (fullført av planlagt, ⭐ for perfekt uke), de siste øktene,
+  månedskalender, mest trente øvelser og vekter. Trykk på en økt eller en
+  dag i kalenderen for å se hva som ble gjort, og for å slette økta fra
+  loggen (kan angres)
 
 Når alle øvelsene for en dag er huket av, kommer et feiringsark med konfetti
 og rekka di. Er alle ukas økter gjort, blir hele stripa en skimrende stolpe,

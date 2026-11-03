@@ -644,6 +644,8 @@
     border:2px solid transparent; color:var(--muted); background:var(--card-2);
   }
   .cal-cell.klikk{cursor:pointer}
+  button.cal-cell{appearance:none; padding:0; font-family:inherit; width:100%}
+  button.cal-cell:active{transform:scale(.92)}
   .cal-cell.tom{background:transparent}
   .cal-cell.hvile{background:transparent}
   .cal-cell.fullfort{background:linear-gradient(180deg,var(--streak-2),var(--streak)); color:#3a2500}
@@ -656,6 +658,91 @@
   .legend{display:flex; flex-wrap:wrap; justify-content:center; gap:8px 14px; margin-top:14px}
   .legend span{display:flex; align-items:center; gap:6px; font-size:.72rem; color:var(--muted); font-weight:650}
   .legend i{width:12px; height:12px; border-radius:50%; display:block; aspect-ratio:auto}
+
+  /* Økter per uke */
+  .wk-chart{display:grid; grid-template-columns:repeat(8,1fr); gap:6px; align-items:end; margin-top:14px}
+  .wk-col{display:flex; flex-direction:column; align-items:center; gap:5px; min-width:0}
+  .wk-n{font:800 .7rem system-ui; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap}
+  .wk-col.perfekt .wk-n{color:var(--streak)}
+  .wk-bar{width:100%; max-width:30px; border-radius:8px; background:var(--card-2); border:1px solid var(--line); position:relative; overflow:hidden}
+  .wk-bar i{position:absolute; left:0; right:0; bottom:0; background:linear-gradient(180deg,var(--streak-2),var(--streak))}
+  .wk-lbl{font-size:.64rem; color:var(--muted); font-weight:700; white-space:nowrap}
+  .wk-col.na .wk-lbl{color:var(--accent)}
+  .wk-col.na .wk-bar{border-color:var(--accent)}
+
+  /* Siste økter og mest trent */
+  .rec-row{
+    appearance:none; width:100%; text-align:left; display:flex; align-items:center; gap:12px;
+    background:none; border:none; border-top:1px solid var(--line); padding:11px 0; color:var(--txt); cursor:pointer; font:inherit;
+  }
+  .rec-row:first-of-type{margin-top:8px}
+  .rec-row:active{opacity:.7}
+  .rec-dot.cal-cell{width:14px; height:14px; flex:0 0 auto; aspect-ratio:auto}
+  .rec-main{flex:1; min-width:0}
+  .rec-main b{display:block; font-size:.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .rec-main small{color:var(--muted); font-size:.75rem}
+  .rec-emo{font-size:1rem; white-space:nowrap; flex:0 0 auto}
+  .rec-pil{color:var(--muted); font-weight:800; flex:0 0 auto}
+  .top-n{flex:0 0 auto; width:76px; text-align:right; font:800 .78rem system-ui; color:var(--muted)}
+  .top-n .wt-bar i{background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+
+  /* Rediger øvelse, kopier dag, begynn på nytt */
+  .pl-edit{appearance:none; background:none; border:none; padding:0; text-align:left; color:inherit; font:inherit; cursor:pointer}
+  .pl-edit .note{color:var(--accent)}
+  .ed-lbl{font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:800; margin:18px 0 8px 2px}
+  .ed-lbl:first-child{margin-top:10px}
+  .ed-row{display:flex; gap:8px}
+  .ed-btn{
+    flex:1; appearance:none; background:var(--card-2); border:1px solid var(--line); color:var(--txt);
+    border-radius:12px; padding:12px; font:700 .9rem system-ui; cursor:pointer; font-variant-numeric:tabular-nums;
+  }
+  .ed-btn:disabled{opacity:.35; cursor:default}
+  .ed-btn:active:not(:disabled){transform:scale(.97)}
+  .ed-input{
+    width:100%; background:var(--card-2); border:1px solid var(--line); border-radius:12px;
+    color:var(--txt); font:inherit; font-size:16px; padding:11px 13px; outline:none;
+  }
+  .ed-input:focus{border-color:var(--accent)}
+  .ed-hint{color:var(--muted); font-size:.76rem; margin:8px 2px 0; line-height:1.4}
+  .chips.ed-days{margin:0}
+  .chip.on{color:var(--accent); border-color:var(--accent); background:color-mix(in srgb, var(--accent) 14%, var(--card))}
+  .chip:disabled{opacity:.35; cursor:default}
+  .ed-danger{
+    width:100%; margin-top:22px; appearance:none; cursor:pointer;
+    background:color-mix(in srgb, var(--miss) 10%, transparent); color:var(--miss);
+    border:1px solid color-mix(in srgb, var(--miss) 40%, transparent); border-radius:14px; padding:13px; font:800 .9rem system-ui;
+  }
+  .ed-danger:active{transform:scale(.98)}
+  .day-tools{display:flex; justify-content:center; flex-wrap:wrap; gap:0 6px; margin-top:6px}
+  .day-tools .push-link{margin:0}
+  .ed-opt{
+    width:100%; appearance:none; text-align:left; cursor:pointer; display:flex; gap:12px; align-items:center;
+    background:var(--card-2); border:1.5px solid var(--line); color:var(--txt); border-radius:14px; padding:13px 14px; margin-bottom:8px; font:inherit;
+  }
+  .ed-opt.on{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 10%, var(--card-2))}
+  .ed-opt .emoji{font-size:1.5rem}
+  .ed-opt b{display:block; font-size:.92rem}
+  .ed-opt small{display:block; color:var(--muted); font-size:.76rem; margin-top:2px; line-height:1.35}
+  .ed-opt.fare.on{border-color:var(--miss); background:color-mix(in srgb, var(--miss) 10%, var(--card-2))}
+  .ed-boks{
+    width:22px; height:22px; border-radius:7px; border:2px solid var(--line); flex:0 0 auto;
+    display:grid; place-items:center; color:#fff; font-weight:900; font-size:.8rem;
+  }
+  .ed-opt.on .ed-boks{background:var(--miss); border-color:var(--miss)}
+
+  /* Angre */
+  .toast{
+    position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom) + 80px); z-index:70;
+    transform:translateX(-50%); width:max-content; max-width:calc(100% - 32px);
+    display:flex; align-items:center; gap:10px; padding:8px 8px 8px 16px;
+    background:var(--card-2); color:var(--txt); border:1px solid var(--line); border-radius:14px;
+    box-shadow:var(--shadow); font-weight:700; font-size:.86rem; animation:toastInn .22s ease;
+  }
+  .toast button{
+    appearance:none; border:none; cursor:pointer; border-radius:10px; padding:8px 12px;
+    background:color-mix(in srgb, var(--accent) 16%, transparent); color:var(--accent); font:800 .84rem system-ui;
+  }
+  @keyframes toastInn{from{opacity:0; transform:translate(-50%,8px)}to{opacity:1; transform:translate(-50%,0)}}
 
   /* ---------- Bunn-navigasjon ---------- */
   .tabbar{
@@ -1629,8 +1716,11 @@
         planDirty = true;
       }
 
+      const nullstilt = plan.resetAt || 0;
+      pruneReset();
       const skyT = {};
       days.forEach(r=>{
+        if((r.t || 0) < nullstilt) return;
         skyT[r.day] = r.t || 0;
         const her = state.days[r.day];
         if(r.data && Array.isArray(r.data.items) && (!her || (r.t || 0) > (her.t || 0))){
@@ -1799,6 +1889,7 @@
       if(raw) state = JSON.parse(raw);
     }catch(e){ state = null; }
     if(!state || !state.days) state = {days:{}};
+    pruneReset();
     syncWindow(state);
     try{
       localStorage.setItem(planKey(), JSON.stringify(plan));
@@ -2227,9 +2318,114 @@
     delete plan.days[wd];
     planChanged();
   }
-  function clearPlan(){
-    plan = defaultPlan();
+  function moveExercise(wd, idx, dir){
+    const ex = plan.days[wd] && plan.days[wd].exercises;
+    const j = idx + dir;
+    if(!ex || j < 0 || j >= ex.length) return;
+    [ex[idx], ex[j]] = [ex[j], ex[idx]];
     planChanged();
+  }
+  // Bare egne øvelser kan få nytt navn. Bankøvelsene har beskrivelse og figur.
+  function renameExercise(wd, idx, navn){
+    const ex = plan.days[wd] && plan.days[wd].exercises[idx];
+    const v = (navn || "").trim();
+    if(!ex || ex.exId || !v || v === ex.name) return;
+    ex.name = v;
+    planChanged();
+  }
+  function sameExercise(a, b){
+    return a.exId ? a.exId === b.exId : (!b.exId && lower(a.name) === lower(b.name));
+  }
+  function dayHas(wd, ex){
+    const d = plan.days[wd];
+    return d ? d.exercises.findIndex(e => sameExercise(e, ex)) : -1;
+  }
+  // Legger øvelsen til på en annen dag, eller fjerner den hvis den alt står der.
+  function toggleOnDay(wd, ex){
+    const i = dayHas(wd, ex);
+    if(i >= 0) removeExercise(wd, i);
+    else addExercise(wd, ex.exId ? {exId: ex.exId, amount: ex.amount} : {exId: null, name: ex.name, amount: ex.amount});
+  }
+  function copyDay(fra, til){
+    if(!plan.days[fra] || fra === til) return;
+    plan.days[til] = JSON.parse(JSON.stringify(plan.days[fra]));
+    planChanged();
+  }
+
+  // Begynn på nytt: tom plan eller senterprogrammet. Med slettLogg forsvinner
+  // også alle økter og vekthistorikken. resetAt følger planen til skyen, så
+  // andre enheter og gamle rader i skyen ikke tar loggen tilbake.
+  function startFresh(medProgram, slettLogg){
+    const ny = defaultPlan();
+    ny.gymSeeded = true;   // ellers legges senterprogrammet inn igjen av seg selv
+    if(!slettLogg){ ny.weights = plan.weights; ny.resetAt = plan.resetAt; }
+    if(medProgram){
+      const prog = EXERCISE_BANK.filter(ex => ex.group === "Treningssenter");
+      GYM_DAYS.forEach(wd=>{
+        ny.days[wd] = {label:"Treningssenter", rounds:1, exercises: prog.map(ex => ({exId: ex.id, amount: ex.amount}))};
+      });
+    }
+    if(slettLogg){
+      const na = Date.now();
+      ny.resetAt = na;
+      if(timer) stoppTimer(true);
+      state.days = {};
+      dirtyDays.clear();
+      offered.clear();
+      if(!member.guest){
+        rest("training_days?member_id=eq." + encodeURIComponent(member.id) + "&t=lt." + na, {method:"DELETE"}).catch(()=>{});
+      }
+    }
+    plan = ny;
+    planChanged();
+  }
+  // Dager fra før loggen ble slettet, fjernes. Dager i vinduet bygges på nytt fra planen.
+  function pruneReset(){
+    const r = plan.resetAt || 0;
+    if(!r) return;
+    Object.keys(state.days).forEach(k=>{ if((state.days[k].t || 0) < r) delete state.days[k]; });
+  }
+
+  // Sletter en økt fra loggen. Dager i inneværende uke og framover bygges
+  // på nytt fra planen, eldre dager blir hviledager.
+  function deleteLoggedDay(key){
+    const d = state.days[key];
+    if(!d) return;
+    const kopi = JSON.stringify(d);
+    if(timer && timer.dayKey === key) stoppTimer(true);
+    state.days[key] = {weekday: d.weekday, label: d.label, items: []};
+    touch(key);
+    syncWindow(state);
+    queuePersist();
+    render();
+    showToast("Økta er slettet fra loggen", ()=>{
+      state.days[key] = JSON.parse(kopi);
+      touch(key);
+      queuePersist();
+      render();
+    });
+  }
+
+  /* ---------- Angre ---------- */
+
+  let toastEl = null, toastTimer = null;
+  function showToast(tekst, angre){
+    if(toastEl) toastEl.remove();
+    clearTimeout(toastTimer);
+    const t = toastEl = el("div", {class:"toast", role:"status"}, [el("span", {}, [tekst])]);
+    if(angre){
+      t.appendChild(el("button", {type:"button", onclick:()=>{
+        t.remove(); toastEl = null; clearTimeout(toastTimer); buzz(8); angre();
+      }}, ["Angre"]));
+    }
+    document.body.appendChild(t);
+    toastTimer = setTimeout(()=>{ t.remove(); if(toastEl === t) toastEl = null; }, 6000);
+  }
+  // Endringer i planen kan angres: hele planen tas vare på før endringen.
+  function medAngre(tekst, endre){
+    const kopi = JSON.stringify(plan);
+    endre();
+    showToast(tekst, ()=>{ plan = normalizePlan(JSON.parse(kopi)); planChanged(); });
   }
 
   /* ---------- Timer ---------- */
@@ -3180,11 +3376,163 @@
     drawList("");
   }
 
+  // Et tomt ark nedenfra. Hodet tegnes med setHead, innholdet i body.
+  function lagSheet(navn){
+    const overlay = el("div", {class:"sheet-overlay"});
+    const head = el("div", {class:"sheet-head"});
+    const body = el("div", {class:"sheet-body"});
+    const sheet = el("div", {class:"sheet", role:"dialog", "aria-modal":"true", "aria-label":navn,
+      onclick:(e)=>e.stopPropagation()}, [head, body]);
+    function close(){ overlay.remove(); document.removeEventListener("keydown", onKey); }
+    function onKey(e){ if(e.key === "Escape") close(); }
+    overlay.addEventListener("click", close);
+    document.addEventListener("keydown", onKey);
+    overlay.appendChild(sheet);
+    document.body.appendChild(overlay);
+    function setHead(barn){
+      head.innerHTML = "";
+      head.appendChild(el("div", {class:"sheet-title", style:"margin-bottom:0"}, barn.concat([
+        el("button", {type:"button", class:"x-btn", "aria-label":"Lukk", onclick:close}, ["✕"])
+      ])));
+    }
+    return {body, close, setHead};
+  }
+
+  // Rediger en øvelse i planen: mengde, navn, rekkefølge, andre dager og slett.
+  function openEdit(wd, startIdx){
+    let idx = startIdx;
+    const S = lagSheet("Endre øvelse");
+    function draw(){
+      const day = plan.days[wd];
+      const ex  = day && day.exercises[idx];
+      if(!ex){ S.close(); return; }
+      S.setHead([
+        el("span", {class:"how-emoji"}, [exEmoji(ex)]),
+        el("div", {style:"flex:1; min-width:0"}, [
+          el("h2", {}, [exName(ex)]),
+          el("div", {class:"how-meta"}, [DAY_NAMES[wd] + " · " + (idx+1) + " av " + day.exercises.length])
+        ])
+      ]);
+      const b = S.body;
+      b.innerHTML = "";
+
+      b.appendChild(el("div", {class:"ed-lbl"}, ["Mengde"]));
+      b.appendChild(el("button", {type:"button", class:"ed-btn", style:"width:100%; font-size:1.05rem",
+        onclick:()=>{ buzz(8); openAmount(exName(ex), ex.amount, v => { setAmount(wd, idx, v); draw(); }); }}, [ex.amount + "  ✎"]));
+
+      if(!ex.exId){
+        b.appendChild(el("div", {class:"ed-lbl"}, ["Navn"]));
+        const inp = el("input", {class:"ed-input", type:"text", value: ex.name, "aria-label":"Navn"});
+        const lagre = ()=>{ renameExercise(wd, idx, inp.value); draw(); };
+        inp.addEventListener("change", lagre);
+        inp.addEventListener("keydown", e=>{ if(e.key === "Enter") inp.blur(); });
+        b.appendChild(inp);
+      }
+
+      b.appendChild(el("div", {class:"ed-lbl"}, ["Rekkefølge"]));
+      const opp = el("button", {type:"button", class:"ed-btn", onclick:()=>{ buzz(8); moveExercise(wd, idx, -1); idx--; draw(); }}, ["↑ Flytt opp"]);
+      const ned = el("button", {type:"button", class:"ed-btn", onclick:()=>{ buzz(8); moveExercise(wd, idx, 1); idx++; draw(); }}, ["↓ Flytt ned"]);
+      opp.disabled = idx === 0;
+      ned.disabled = idx === day.exercises.length - 1;
+      b.appendChild(el("div", {class:"ed-row"}, [opp, ned]));
+
+      b.appendChild(el("div", {class:"ed-lbl"}, ["Også på"]));
+      const chips = el("div", {class:"chips ed-days"});
+      WEEK_ORDER.forEach(d=>{
+        const egen = d === wd, har = egen || dayHas(d, ex) >= 0;
+        const c = el("button", {type:"button", class:"chip" + (har ? " on" : ""), "aria-pressed":String(har),
+          onclick: egen ? null : ()=>{ buzz(8); toggleOnDay(d, ex); draw(); }}, [DAY_SHORT[d], el("i", {}, [har ? "✓" : "+"])]);
+        if(egen) c.disabled = true;
+        chips.appendChild(c);
+      });
+      b.appendChild(chips);
+      b.appendChild(el("div", {class:"ed-hint"}, ["Trykk på en dag for å legge øvelsen til eller ta den bort der."]));
+
+      b.appendChild(el("button", {type:"button", class:"ed-danger", onclick:()=>{
+        buzz(10);
+        const navn = exName(ex);
+        S.close();
+        medAngre(navn + " er fjernet", ()=>removeExercise(wd, idx));
+      }}, ["Slett fra " + lower(DAY_NAMES[wd])]));
+    }
+    draw();
+  }
+
+  // Kopier en hel dag til andre dager. Det som stod der, byttes ut (kan angres).
+  function openCopyDay(wd){
+    const S = lagSheet("Kopier dagen");
+    S.setHead([el("h2", {}, ["Kopier " + lower(DAY_NAMES[wd]) + " til …"])]);
+    const kopiert = new Set();
+    function draw(){
+      const b = S.body;
+      b.innerHTML = "";
+      b.appendChild(el("div", {class:"ed-hint", style:"margin:10px 2px 12px"}, [
+        "Trykk på dagene som skal få de samme øvelsene. Står det noe der fra før, byttes det ut."
+      ]));
+      const chips = el("div", {class:"chips ed-days"});
+      WEEK_ORDER.forEach(d=>{
+        const egen = d === wd, n = plan.days[d] ? plan.days[d].exercises.length : 0;
+        const c = el("button", {type:"button", class:"chip" + (kopiert.has(d) ? " on" : n ? " has" : ""),
+          onclick: egen ? null : ()=>{
+            buzz(8);
+            medAngre(DAY_NAMES[wd] + " er kopiert til " + lower(DAY_NAMES[d]), ()=>copyDay(wd, d));
+            kopiert.add(d);
+            draw();
+          }}, [DAY_SHORT[d], el("i", {}, [kopiert.has(d) ? "✓" : n ? String(n) : "–"])]);
+        if(egen) c.disabled = true;
+        chips.appendChild(c);
+      });
+      b.appendChild(chips);
+      b.appendChild(el("button", {type:"button", class:"cta", style:"margin-top:18px", onclick:S.close}, ["Ferdig"]));
+    }
+    draw();
+  }
+
+  // Begynn på nytt: tom plan eller senterprogrammet, og eventuelt slett loggen.
+  function openReset(){
+    const S = lagSheet("Begynn på nytt");
+    S.setHead([el("h2", {}, ["Begynn på nytt"])]);
+    let medProgram = false, slettLogg = false;
+    function draw(){
+      const b = S.body;
+      b.innerHTML = "";
+      b.appendChild(el("div", {class:"ed-lbl"}, ["Ny plan"]));
+      [[false, "🧹", "Tom plan", "Alle dager blir hviledager. Du legger inn øvelsene selv."],
+       [true,  "🏋️", "Senterprogrammet", "Apparatprogrammet på mandag og torsdag, resten er hviledager."]].forEach(([v, emo, tittel, tekst])=>{
+        b.appendChild(el("button", {type:"button", class:"ed-opt" + (medProgram === v ? " on" : ""), "aria-pressed":String(medProgram === v),
+          onclick:()=>{ buzz(8); medProgram = v; draw(); }}, [
+          el("span", {class:"emoji"}, [emo]), el("span", {}, [el("b", {}, [tittel]), el("small", {}, [tekst])])
+        ]));
+      });
+      b.appendChild(el("div", {class:"ed-lbl"}, ["Loggen"]));
+      b.appendChild(el("button", {type:"button", class:"ed-opt fare" + (slettLogg ? " on" : ""), role:"checkbox", "aria-checked":String(slettLogg),
+        onclick:()=>{ buzz(8); slettLogg = !slettLogg; draw(); }}, [
+        el("span", {class:"ed-boks"}, [slettLogg ? "✓" : ""]),
+        el("span", {}, [el("b", {}, ["Slett loggen også"]),
+          el("small", {}, ["Alle økter, rekka og vekthistorikken slettes for godt, også i skyen. Dette kan ikke angres."])])
+      ]));
+      if(!slettLogg) b.appendChild(el("div", {class:"ed-hint"}, ["Loggen og rekka di blir stående. Økter du har begynt på, beholdes."]));
+      b.appendChild(el("button", {type:"button", class:"cta", style:"margin-top:18px", onclick:()=>{
+        if(slettLogg && !confirm("Slette hele loggen for godt? Dette kan ikke angres.")) return;
+        buzz(12);
+        S.close();
+        planWd = null;
+        if(slettLogg){
+          startFresh(medProgram, true);
+          showToast("Alt er nullstilt. Lykke til!");
+        }else{
+          medAngre(medProgram ? "Planen er byttet til senterprogrammet" : "Planen er tømt", ()=>startFresh(medProgram, false));
+        }
+      }}, ["Begynn på nytt"]));
+    }
+    draw();
+  }
+
   function renderPlan(app){
     if(planWd === null) planWd = new Date().getDay();
 
     app.appendChild(el("h1", {class:"title"}, ["Plan"]));
-    app.appendChild(el("div", {class:"sub"}, ["Velg en dag og legg til øvelser. Tomme dager er hviledager."]));
+    app.appendChild(el("div", {class:"sub"}, ["Velg en dag og legg til øvelser. Trykk på en øvelse for å endre, flytte eller kopiere den."]));
 
     const chips = el("div", {class:"chips"});
     WEEK_ORDER.forEach(wd=>{
@@ -3217,13 +3565,14 @@
           onclick:()=>{ buzz(8); openAmount(exName(ex), ex.amount, v => setAmount(wd, idx, v)); }}, [ex.amount]);
         ul.appendChild(el("li", {class:"pl-row"}, [
           emojiEl(ex, exEmoji(ex), ex.amount),
-          el("span", {class:"label"}, [
+          el("button", {type:"button", class:"label pl-edit", "aria-label":"Endre " + exName(ex),
+            onclick:()=>{ buzz(8); openEdit(wd, idx); }}, [
             el("span", {class:"name"}, [exName(ex)]),
-            exNote(ex) ? el("span", {class:"note"}, [exNote(ex)]) : null
+            exNote(ex) ? el("span", {class:"note", style:"color:var(--muted)"}, [exNote(ex)]) : null
           ]),
           amt,
           el("button", {type:"button", class:"x-btn", "aria-label":"Fjern " + exName(ex),
-            onclick:()=>removeExercise(wd, idx)}, ["✕"])
+            onclick:()=>{ buzz(10); medAngre(exName(ex) + " er fjernet", ()=>removeExercise(wd, idx)); }}, ["✕"])
         ]));
       });
       panel.appendChild(ul);
@@ -3244,20 +3593,20 @@
 
     panel.appendChild(el("button", {type:"button", class:"add-btn", onclick:()=>openPicker(wd)}, ["+ Legg til øvelse"]));
     if(has){
-      panel.appendChild(el("button", {type:"button", class:"push-link", onclick:()=>{
-        if(confirm("Gjøre " + lower(DAY_NAMES[wd]) + " til hviledag?")) clearDay(wd);
-      }}, ["Gjør til hviledag"]));
+      panel.appendChild(el("div", {class:"day-tools"}, [
+        el("button", {type:"button", class:"push-link", onclick:()=>{ buzz(8); openCopyDay(wd); }}, ["Kopier dagen …"]),
+        el("button", {type:"button", class:"push-link", onclick:()=>{
+          buzz(10);
+          medAngre(DAY_NAMES[wd] + " er hviledag nå", ()=>clearDay(wd));
+        }}, ["Gjør til hviledag"])
+      ]));
     }
     app.appendChild(panel);
 
     const footer = el("footer", {}, [
       el("span", {}, ["Endringer gjelder hele denne uka og framover. Dager du har startet på, blir stående."])
     ]);
-    if(!isPlanEmpty()){
-      footer.appendChild(el("button", {type:"button", class:"reset", onclick:()=>{
-        if(confirm("Tømme hele planen? Økter du allerede har begynt på beholdes.")) clearPlan();
-      }}, ["Tøm planen"]));
-    }
+    footer.appendChild(el("button", {type:"button", class:"reset", onclick:()=>{ buzz(8); openReset(); }}, ["Begynn på nytt"]));
     app.appendChild(footer);
   }
 
@@ -3275,21 +3624,140 @@
     flyttet:  "Flyttet til en annen dag"
   };
 
-  function renderDayDetail(key){
+  function fmtKort(key){
+    const d = keyDate(key);
+    return DAY_SHORT[d.getDay()] + " " + d.getDate() + ". " + MONTH_FULL[d.getMonth()];
+  }
+
+  // Én dag i et ark: øvelsene som ble gjort, og mulighet til å slette økta.
+  function openDaySheet(key){
     const day = state.days[key];
     const d   = keyDate(key);
     const c   = classifyDay(key);
-    const panel = el("section", {class:"panel", style:"margin-top:12px"});
-    panel.appendChild(el("h2", {}, [DAY_NAMES[d.getDay()] + " " + fmtDate(d)]));
-    panel.appendChild(el("div", {class:"meta"}, [KLASSE_TEKST[c] || ""]));
-    if(!day || day.items.length===0){
-      panel.appendChild(el("div", {class:"empty"}, [c === "hoppet" || c === "flyttet" ? "Alt ble flyttet til en annen dag." : "Ingen økt denne dagen."]));
+    const S   = lagSheet(DAY_NAMES[d.getDay()] + " " + fmtDate(d));
+    const done = day ? day.items.filter(i => i.done).length : 0;
+    S.setHead([el("div", {style:"flex:1; min-width:0"}, [
+      el("h2", {}, [DAY_NAMES[d.getDay()] + " " + fmtDate(d)]),
+      el("div", {class:"how-meta"}, [(KLASSE_TEKST[c] || "") + (day && day.items.length ? " · " + done + " av " + day.items.length + " gjort" : "")])
+    ])]);
+    if(!day || day.items.length === 0){
+      S.body.appendChild(el("div", {class:"empty"}, [c === "hoppet" || c === "flyttet" ? "Alt ble flyttet til en annen dag." : "Ingen økt denne dagen."]));
     }else{
-      const ul = el("ul", {class:"tasks"});
-      day.items.forEach(i=>ul.appendChild(renderTask(key, i, true)));
-      panel.appendChild(ul);
+      const ul = el("ul", {class:"tasks", style:"margin-top:12px"});
+      day.items.forEach(i => ul.appendChild(renderTask(key, i, true)));
+      S.body.appendChild(ul);
     }
-    return panel;
+    const tKey = dateKey(startOfDay(new Date()));
+    const harFramgang = day && (day.items.some(i => i.done || setsStarted(i)) || day.skipped);
+    if(key <= tKey && harFramgang){
+      S.body.appendChild(el("button", {type:"button", class:"ed-danger", onclick:()=>{
+        buzz(10);
+        S.close();
+        deleteLoggedDay(key);
+      }}, ["Slett økta fra loggen"]));
+    }
+  }
+
+  // Fullførte økter av planlagte de siste åtte ukene.
+  function renderWeekChart(){
+    const mon = mondayOf(startOfDay(new Date()));
+    const uker = [];
+    for(let w = 7; w >= 0; w--){
+      const start = addDays(mon, -7*w);
+      let gjort = 0, ant = 0;
+      for(let i=0;i<7;i++){
+        const c = classifyDay(addDays(start, i));
+        if(c === "hvile" || c === "flyttet") continue;
+        ant++;
+        if(c === "fullfort") gjort++;
+      }
+      uker.push({start, gjort, ant, na: w === 0});
+    }
+    if(uker.every(u => !u.ant)) return null;
+    const maks = Math.max(1, ...uker.map(u => u.ant));
+    const denne = uker[uker.length-1], forrige = uker[uker.length-2];
+    let tekst = "Fullført av planlagt";
+    if(forrige.ant) tekst = "Forrige uke: " + forrige.gjort + " av " + forrige.ant + (forrige.gjort === forrige.ant ? " ⭐" : "");
+
+    const card = el("div", {class:"card"});
+    card.appendChild(el("div", {class:"card-title"}, ["📊 Økter per uke"]));
+    card.appendChild(el("div", {class:"sub"}, [tekst]));
+    const chart = el("div", {class:"wk-chart", role:"img",
+      "aria-label":"Økter per uke: " + uker.map(u => "uke " + isoWeekNo(u.start) + " " + u.gjort + " av " + u.ant).join(", ")});
+    uker.forEach(u=>{
+      const h = u.ant ? Math.max(10, Math.round(u.ant / maks * 76)) : 4;
+      const fyll = u.ant ? Math.round(u.gjort / u.ant * 100) : 0;
+      chart.appendChild(el("div", {class:"wk-col" + (u.na ? " na" : "") + (u.ant && u.gjort === u.ant ? " perfekt" : "")}, [
+        el("span", {class:"wk-n"}, [u.ant ? (u.gjort === u.ant ? "⭐" : u.gjort + "/" + u.ant) : "–"]),
+        el("div", {class:"wk-bar", style:"height:" + h + "px"}, [el("i", {style:"height:" + fyll + "%"})]),
+        el("span", {class:"wk-lbl"}, [u.na ? "Nå" : "U" + isoWeekNo(u.start)])
+      ]));
+    });
+    card.appendChild(chart);
+    if(denne.ant) card.appendChild(el("div", {class:"ed-hint", style:"text-align:center; margin-top:10px"}, [
+      "Denne uka: " + denne.gjort + " av " + denne.ant + " økter"
+    ]));
+    return card;
+  }
+
+  // De siste dagene der noe ble gjort.
+  function renderRecent(){
+    const tKey = dateKey(startOfDay(new Date()));
+    const keys = Object.keys(state.days).filter(k => k <= tKey).sort().reverse()
+      .filter(k => state.days[k].items.some(i => i.done || setsStarted(i))).slice(0, 6);
+    if(!keys.length) return null;
+    const card = el("div", {class:"card"});
+    card.appendChild(el("div", {class:"card-title"}, ["🗓️ Siste økter"]));
+    keys.forEach(k=>{
+      const day = state.days[k], c = classifyDay(k);
+      const gjort = day.items.filter(i => i.done);
+      const emo = [];
+      gjort.forEach(i=>{ const e = itemEmoji(i); if(emo.indexOf(e) < 0) emo.push(e); });
+      card.appendChild(el("button", {type:"button", class:"rec-row", onclick:()=>{ buzz(8); openDaySheet(k); }}, [
+        el("i", {class:"rec-dot cal-cell " + c}),
+        el("span", {class:"rec-main"}, [
+          el("b", {}, [fmtKort(k) + (day.label ? " · " + day.label : "")]),
+          el("small", {}, [gjort.length + " av " + day.items.length + " øvelser · " + (KLASSE_TEKST[c] || "")])
+        ]),
+        el("span", {class:"rec-emo"}, [emo.slice(0, 3).join("")]),
+        el("span", {class:"rec-pil"}, ["›"])
+      ]));
+    });
+    return card;
+  }
+
+  // Øvelsene du har gjort flest ganger (dager), med siste mengde.
+  function renderTopExercises(){
+    const tKey = dateKey(startOfDay(new Date()));
+    const by = {};
+    Object.keys(state.days).filter(k => k <= tKey).sort().forEach(k=>{
+      const sett = new Set();
+      state.days[k].items.forEach(i=>{
+        if(!i.done) return;
+        const n = lower(i.name);
+        if(sett.has(n)) return;
+        sett.add(n);
+        const x = by[n] || (by[n] = {name: i.name, emoji: itemEmoji(i), n: 0, amount: i.amount});
+        x.n++; x.amount = i.amount;
+      });
+    });
+    const liste = Object.keys(by).map(n => by[n]).sort((a,b) => b.n - a.n).slice(0, 5);
+    if(!liste.length) return null;
+    const maks = liste[0].n;
+    const card = el("div", {class:"card"});
+    card.appendChild(el("div", {class:"card-title"}, ["🏅 Mest trent"]));
+    card.appendChild(el("div", {class:"sub", style:"margin-bottom:6px"}, ["Antall dager øvelsen er gjort"]));
+    liste.forEach(x=>{
+      card.appendChild(el("div", {class:"wt-row"}, [
+        el("span", {class:"emoji"}, [x.emoji]),
+        el("span", {class:"label"}, [el("span", {class:"name"}, [x.name]), el("span", {class:"note"}, ["Sist: " + x.amount])]),
+        el("div", {class:"top-n"}, [
+          el("span", {}, [x.n + (x.n === 1 ? " gang" : " ganger")]),
+          el("div", {class:"wt-bar"}, [el("i", {style:"width:" + Math.round(x.n / maks * 100) + "%"})])
+        ])
+      ]));
+    });
+    return card;
   }
 
   function renderWeights(){
@@ -3343,14 +3811,14 @@
       ]));
     });
     app.appendChild(row);
-    const vekter = renderWeights();
-    if(vekter) app.appendChild(vekter);
 
     if(!stats.harHistorikk){
       app.appendChild(el("div", {class:"card"}, [el("div", {class:"empty"}, [
         el("span", {class:"big"}, ["📈"]),
         "Ingen økter logget ennå. Så snart du huker av den første, dukker den opp her."
       ])]));
+      const vekter = renderWeights();
+      if(vekter) app.appendChild(vekter);
       return;
     }
 
@@ -3382,10 +3850,12 @@
       const key = dateKey(d);
       const c   = classifyDay(key);
       const kan = !!(state.days[key] && state.days[key].items.length) || c === "hoppet" || c === "flyttet";
-      cal.appendChild(el("div", {
-        class:"cal-cell "+c+(kan?" klikk":"")+(logValgt===key?" valgt":""),
+      cal.appendChild(el(kan ? "button" : "div", {
+        type: kan ? "button" : null,
+        class:"cal-cell "+c+(kan?" klikk":""),
         title: KLASSE_TEKST[c] || "",
-        onclick: kan ? ()=>{ logValgt = (logValgt===key) ? null : key; render(); } : null
+        "aria-label": kan ? dag + ". " + MONTH_FULL[logMonth.getMonth()] + ", " + (KLASSE_TEKST[c] || "") : null,
+        onclick: kan ? ()=>{ buzz(8); openDaySheet(key); } : null
       }, [String(dag)]));
     }
     card.appendChild(cal);
@@ -3395,9 +3865,11 @@
       legend.appendChild(el("span", {}, [el("i", {class:"cal-cell "+k}), l]));
     });
     card.appendChild(legend);
-    app.appendChild(card);
 
-    if(logValgt) app.appendChild(renderDayDetail(logValgt));
+    // Uka og de siste øktene først, så kalenderen, så det som bygger seg opp over tid.
+    [renderWeekChart(), renderRecent()].forEach(c => { if(c) app.appendChild(c); });
+    app.appendChild(card);
+    [renderTopExercises(), renderWeights()].forEach(c => { if(c) app.appendChild(c); });
   }
 
   /* ---------- Visning: Spenst ----------
