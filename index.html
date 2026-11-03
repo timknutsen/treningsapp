@@ -762,6 +762,7 @@
 
     {id:"spensthopp",   name:"Spensthopp",           amount:"3×5 stk",   group:"Bein",      emoji:"🦘"},
     {id:"utfall",       name:"Utfall m/ 3 kg vekter",amount:"30 stk",    group:"Bein",      emoji:"🦵"},
+    {id:"utfall_kropp", name:"Utfall uten vekter",   amount:"20 stk",    group:"Bein",      emoji:"🦵"},
     {id:"knebøy",       name:"Knebøy",               amount:"20 stk",    group:"Bein",      emoji:"🏋️"},
     {id:"bulgarsk",     name:"Bulgarsk utfall",      amount:"12 stk",    group:"Bein",      emoji:"🦵"},
     {id:"tåhev",        name:"Tåhev",                amount:"25 stk",    group:"Bein",      emoji:"🦶"},
@@ -777,9 +778,11 @@
     {id:"roing_strikk", name:"Roing m/ strikk",      amount:"15 stk",    group:"Overkropp", emoji:"🎗️"},
 
     {id:"legraise",     name:"Leg raise",            amount:"15 stk",    group:"Kjerne",    emoji:"🦵"},
+    {id:"hengbeinhev",  name:"Hengende beinhev",     amount:"3×8 stk",   group:"Kjerne",    emoji:"🐒"},
     {id:"hold90",       name:"90 grader hold",       amount:"90 sek",    group:"Kjerne",    emoji:"⏱️"},
     {id:"planke",       name:"Planke",               amount:"60 sek",    group:"Kjerne",    emoji:"🧱"},
     {id:"sideplanke",   name:"Sideplanke",           amount:"40 sek",    group:"Kjerne",    emoji:"📐"},
+    {id:"sidehev",      name:"Sidehev",              amount:"2×12 stk",  group:"Kjerne",    emoji:"↕️"},
     {id:"ryggenhev",    name:"Ryggenhev",            amount:"40 sek",    group:"Kjerne",    emoji:"🦸"},
     {id:"russiantwist", name:"Russian twist",        amount:"30 stk",    group:"Kjerne",    emoji:"🌀"},
     {id:"situps",       name:"Sit-ups",              amount:"20 stk",    group:"Kjerne",    emoji:"🤸"},
@@ -1058,6 +1061,16 @@
         {t:180, l1:[88,0], l2:[-24,-82], ft2:-20, a1:[0,0], a2:[0,0]}
       ]
     },
+    utfall_kropp: {
+      steps:["Stå rett med hendene på hoftene.",
+             "Ta et langt steg fram og senk deg til bakre kne nesten treffer gulvet.",
+             "Press fra med fremre fot tilbake til start. Bytt bein."],
+      tip:"Fremre kne over foten, ikke innover. Hold overkroppen oppreist. Lett? Ta vekter.",
+      poses:[
+        Object.assign({}, STAA, {w1:[104,-6], w2:[101,-6]}),
+        {t:180, l1:[88,0], l2:[-24,-82], ft2:-20, w1:[104,-6], w2:[101,-6]}
+      ]
+    },
     knebøy: {
       steps:["Stå med føttene litt bredere enn hoftene og tærne litt ut.",
              "Sett deg bakover og ned som på en stol, til lårene er vannrette.",
@@ -1212,6 +1225,32 @@
       ]
     },
 
+    sidehev: {
+      steps:["Ligg på siden med albuen rett under skulderen og beina strake oppå hverandre.",
+             "Strekk den øverste armen rett opp mot taket og løft hoften til kroppen er en rett linje.",
+             "Senk hoften rolig ned mot gulvet, og løft igjen. Ta alle på én side, så bytt."],
+      tip:"Hold hoften framme, ikke la den falle bakover. For tungt? Bøy knærne og løft fra dem.",
+      front:true,
+      dur:2.2,
+      poses:[
+        {x:96, t:126, l1:[-90,-90], l2:[-90,-90], ft1:-100, ft2:-100, a1:[0,90], a2:[180,180]},
+        {x:94, t:112, l1:[-68,-68], l2:[-68,-68], ft1:-68, ft2:-68, a1:[0,90], a2:[180,180]}
+      ]
+    },
+
+    hengbeinhev: {
+      zoom:.7,
+      steps:["Heng i stanga med strake armer og overhåndsgrep.",
+             "Løft strake bein fram og opp til de er vannrette, eller høyere.",
+             "Senk sakte ned uten å svinge."],
+      tip:"Stram magen før du løfter, så du ikke svinger. For tungt? Løft knærne i stedet.",
+      bg:'<path class="prop" d="M50,-16 L160,-16"/>',
+      dur:2.6,
+      poses:[
+        {x:104, y:58, t:180, l1:[2,0], l2:[-2,-2], ft1:30, ft2:30, w1:[106,-16], w2:[103,-16]},
+        {x:98, y:57, t:172, l1:[96,96], l2:[94,94], ft1:170, ft2:170, w1:[106,-16], w2:[103,-16]}
+      ]
+    },
     legraise: {
       steps:["Ligg på ryggen med armene langs siden.",
              "Løft strake bein opp til de peker mot taket.",
