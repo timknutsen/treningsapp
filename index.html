@@ -730,6 +730,67 @@
   }
   .ed-opt.on .ed-boks{background:var(--miss); border-color:var(--miss)}
 
+  /* ---------- PR ---------- */
+  .pr-hero{margin:18px 0 14px; text-align:center}
+  .pr-hero .hero-value{font-size:2.6rem}
+  .pr-hero .fun{display:inline-block; margin-top:10px; padding:6px 12px; border-radius:999px; font-weight:700; font-size:.84rem;
+    background:color-mix(in srgb, var(--streak-2) 16%, transparent); color:var(--txt)}
+  .pr-row{display:flex; align-items:center; gap:11px; padding:11px 0; border-top:1px solid var(--line)}
+  .pr-row:first-of-type{margin-top:8px}
+  .pr-val{flex:0 0 auto; text-align:right}
+  .pr-val b{display:block; font-size:1.08rem; font-weight:800; font-variant-numeric:tabular-nums}
+  .pr-val small{color:var(--muted); font-size:.72rem; font-weight:650}
+  .pr-ny{display:inline-block; margin-left:6px; padding:1px 6px; border-radius:999px; font:800 .62rem system-ui; vertical-align:2px;
+    background:linear-gradient(180deg,var(--streak-2),var(--streak)); color:#3a2500}
+  .nx-card{border-top:1px solid var(--line); padding:13px 0 12px}
+  .nx-card:first-of-type{margin-top:8px}
+  .nx-top{display:flex; align-items:center; gap:11px}
+  .nx-kg{flex:0 0 auto; font-weight:800; font-variant-numeric:tabular-nums; font-size:.95rem}
+  .nx-kg span{color:var(--muted); font-weight:700}
+  .nx-kg em{font-style:normal; color:var(--streak)}
+  .spark{display:block; width:100%; height:44px; margin:8px 0 6px}
+  .spark .ln{fill:none; stroke:var(--accent); stroke-width:2.2; stroke-linejoin:round; stroke-linecap:round}
+  .spark .ar{fill:color-mix(in srgb, var(--accent) 14%, transparent)}
+  .spark .pt{fill:var(--accent)}
+  .spark .siste{fill:var(--streak); stroke:var(--card); stroke-width:2}
+  .spark .lbl{fill:var(--muted); font:700 9px system-ui}
+  .spark .mal{stroke:var(--streak); stroke-width:1.5; stroke-dasharray:3 4}
+  .nx-bot{display:flex; align-items:center; gap:10px; font-size:.76rem; color:var(--muted); font-weight:650}
+  .nx-bot .wt-bar{flex:1; margin:0}
+  .nx-bot b{color:var(--txt)}
+
+  /* Gutta-kalkulatoren */
+  .kalk-person{background:var(--card-2); border:1px solid var(--line); border-radius:14px; padding:10px; margin-top:10px}
+  .kalk-top{display:flex; gap:8px; align-items:center}
+  .kalk-top input{flex:1; min-width:0}
+  .kalk-felt{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px}
+  .kalk-felt label{display:flex; flex-direction:column; gap:4px; font-size:.66rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--muted)}
+  .kalk-in{
+    width:100%; background:var(--card); border:1px solid var(--line); border-radius:10px; color:var(--txt);
+    font:700 16px system-ui; padding:9px 10px; outline:none; font-variant-numeric:tabular-nums;
+  }
+  .kalk-in:focus{border-color:var(--accent)}
+  .kalk-modus{display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:14px 0 4px}
+  .kalk-modus button{
+    appearance:none; cursor:pointer; border:1px solid var(--line); background:var(--card-2); color:var(--muted);
+    border-radius:12px; padding:9px 6px; font:800 .78rem system-ui;
+  }
+  .kalk-modus button.on{border-color:var(--accent); color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, var(--card-2))}
+  .podium{display:grid; gap:8px; margin-top:10px}
+  .pod{display:flex; align-items:center; gap:12px; border-radius:14px; padding:12px 14px; background:var(--card-2); border:1px solid var(--line)}
+  .pod.p1{background:linear-gradient(135deg, color-mix(in srgb, var(--streak-2) 30%, var(--card-2)), var(--card-2)); border-color:color-mix(in srgb, var(--streak) 55%, transparent)}
+  .pod .med{font-size:1.7rem; line-height:1; width:32px; text-align:center}
+  .pod .navn{flex:1; min-width:0}
+  .pod .navn b{display:block; font-size:.98rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .pod .navn small{display:block; color:var(--muted); font-size:.75rem; margin-top:2px; line-height:1.35}
+  .pod .tall{flex:0 0 auto; text-align:right}
+  .pod .tall b{display:block; font-size:1.2rem; font-weight:800; font-variant-numeric:tabular-nums}
+  .pod .tall small{color:var(--muted); font-size:.68rem; font-weight:700}
+  .pst{width:100%; border-collapse:collapse; margin-top:8px; font-variant-numeric:tabular-nums; font-size:.84rem}
+  .pst td{padding:7px 4px; border-top:1px solid var(--line)}
+  .pst td:last-child{text-align:right; font-weight:800}
+  .pst td:first-child{color:var(--muted); font-weight:700}
+
   /* Angre */
   .toast{
     position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom) + 80px); z-index:70;
@@ -798,6 +859,10 @@
     <button type="button" class="tab" data-view="spenst">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V6M7 11l5-5 5 5M5 20h14"/></svg>
       <span>Spenst</span>
+    </button>
+    <button type="button" class="tab" data-view="pr">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v6a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 14v3M8 20h8M10 17h4"/></svg>
+      <span>PR</span>
     </button>
     <button type="button" class="tab" data-view="log">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-6M12 20V5M19 20v-10"/></svg>
@@ -3872,6 +3937,301 @@
     [renderTopExercises(), renderWeights()].forEach(c => { if(c) app.appendChild(c); });
   }
 
+  /* ---------- Visning: PR ----------
+     Rekorder og framgang regnes ut fra loggen. Alt som er huket av, eller har
+     sett huket av, teller. Mengden tolkes med parseAmount. Maks (1RM) er et
+     anslag med Epleys formel: vekt × (1 + reps/30). */
+
+  // Ting å sammenligne med, i kg. Bare til moro.
+  const TING = [
+    [4.5, "katt", "katter", "🐈"], [30, "labrador", "labradorer", "🐕"], [60, "kenguru", "kenguruer", "🦘"],
+    [100, "panda", "pandaer", "🐼"], [190, "løve", "løver", "🦁"], [450, "isbjørn", "isbjørner", "🐻‍❄️"],
+    [700, "ku", "kuer", "🐄"], [1300, "bil", "biler", "🚗"], [5000, "elefant", "elefanter", "🐘"],
+    [150000, "blåhval", "blåhvaler", "🐋"]
+  ];
+  function morsomt(kg){
+    let t = TING[0];
+    TING.forEach(x=>{ if(kg >= x[0]) t = x; });
+    const n = kg / t[0];
+    const tall = n >= 10 ? String(Math.round(n)) : fmtKg(Math.round(n * 10) / 10);
+    return t[3] + " " + tall + " " + (tall === "1" ? t[1] : t[2]);
+  }
+  const halv = v => Math.round(v * 2) / 2;
+  function e1rm(kg, reps){ return reps <= 1 ? kg : halv(kg * (1 + reps / 30)); }
+  function fmtStor(n){ return Math.round(n).toLocaleString("nb-NO"); }
+  function fmtBest(b){
+    if(b.enhet === "sek") return b.v >= 120 ? Math.floor(b.v / 60) + ":" + pad(b.v % 60) + " min" : b.v + " sek";
+    return tall(b.v) + " " + b.enhet;
+  }
+
+  function itemGjort(i){ return i.done || setsStarted(i); }
+  function settGjort(i){
+    const s = itemSets(i);
+    return s ? s.filter(Boolean).length : (i.done ? 1 : 0);
+  }
+
+  function liftStats(){
+    const today = startOfDay(new Date());
+    const tKey = dateKey(today), man = dateKey(mondayOf(today));
+    const by = {};
+    let total = 0, uke = 0;
+    Object.keys(state.days).filter(k => k <= tKey).sort().forEach(k=>{
+      state.days[k].items.forEach(i=>{
+        if(!itemGjort(i)) return;
+        const a = parseAmount(i.amount);
+        if(!a) return;
+        const n = lower(i.name);
+        const x = by[n] || (by[n] = {name: i.name, emoji: itemEmoji(i), hist: [], dager: new Set()});
+        x.dager.add(k);
+        if(a.kg && a.enhet === "stk"){
+          const vol = settGjort(i) * a.antall * a.kg;
+          total += vol;
+          if(k >= man) uke += vol;
+          if(!x.kg || a.kg > x.kg.max || (a.kg === x.kg.max && a.antall > x.kg.reps)) x.kg = {max: a.kg, reps: a.antall, d: k};
+          const e = e1rm(a.kg, a.antall);
+          if(!x.e1 || e > x.e1) x.e1 = e;
+          const h = x.hist[x.hist.length - 1];
+          if(h && h.d === k) h.kg = Math.max(h.kg, a.kg); else x.hist.push({d: k, kg: a.kg});
+        }else if(!a.kg){
+          const v = a.enhet === "min" ? a.antall * 60 : a.antall;
+          const enhet = a.enhet === "min" ? "sek" : a.enhet;
+          if(!x.best || (x.best.enhet === enhet && v > x.best.v)) x.best = {v, enhet, d: k};
+        }
+      });
+    });
+    return {by, total, uke};
+  }
+
+  // Vektkurve med stiplet linje for neste vekt.
+  function sparkSvg(hist, mal){
+    const W = 300, H = 46, px = 8, py = 7;
+    const vals = hist.map(h => h.kg).concat([mal]);
+    const lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    const y = v => hi === lo ? H/2 : py + (hi - v) / (hi - lo) * (H - 2*py);
+    const x = i => hist.length === 1 ? W/2 : px + i / (hist.length - 1) * (W - 2*px - 40);
+    const P = hist.map((h, i) => [r1(x(i)), r1(y(h.kg))]);
+    const linje = P.map(p => p.join(",")).join(" ");
+    let s = '<svg class="spark" viewBox="0 0 '+W+' '+H+'" aria-hidden="true">';
+    s += '<line class="mal" x1="'+px+'" x2="'+(W-px)+'" y1="'+r1(y(mal))+'" y2="'+r1(y(mal))+'"/>';
+    s += '<text class="lbl" x="'+(W-px)+'" y="'+r1(Math.max(9, y(mal) - 4))+'" text-anchor="end">'+fmtKg(mal)+' kg</text>';
+    if(P.length > 1){
+      s += '<polygon class="ar" points="'+P[0][0]+','+(H-1)+' '+linje+' '+P[P.length-1][0]+','+(H-1)+'"/>';
+      s += '<polyline class="ln" points="'+linje+'"/>';
+    }
+    P.forEach((p, i) => { s += '<circle class="'+(i === P.length-1 ? "siste" : "pt")+'" cx="'+p[0]+'" cy="'+p[1]+'" r="'+(i === P.length-1 ? 4.5 : 2.2)+'"/>'; });
+    return s + '</svg>';
+  }
+
+  function renderPR(app){
+    const L = liftStats();
+    const today = startOfDay(new Date());
+    const nylig = dateKey(addDays(today, -7));
+
+    app.appendChild(el("h1", {class:"title"}, ["Rekorder"]));
+    app.appendChild(el("div", {class:"sub"}, ["Personlige rekorder, veien til neste løft og en kalkulator for gutta"]));
+
+    if(L.total > 0){
+      app.appendChild(el("div", {class:"pr-hero"}, [
+        el("div", {class:"hero-value"}, [fmtStor(L.total) + " kg"]),
+        el("div", {class:"hero-note"}, ["løftet totalt · " + fmtStor(L.uke) + " kg denne uka"]),
+        el("div", {class:"fun"}, ["Like tungt som " + morsomt(L.total)])
+      ]));
+    }
+
+    // Personlige rekorder
+    const vekt = Object.keys(L.by).map(n => L.by[n]).filter(x => x.kg).sort((a, b) => b.e1 - a.e1);
+    const annet = Object.keys(L.by).map(n => L.by[n]).filter(x => !x.kg && x.best).sort((a, b) => b.dager.size - a.dager.size);
+    const pr = el("div", {class:"card"});
+    pr.appendChild(el("div", {class:"card-title"}, ["🏆 Personlige rekorder"]));
+    if(!vekt.length && !annet.length){
+      pr.appendChild(el("div", {class:"empty"}, [el("span", {class:"big"}, ["🏋️"]), "Huk av øvelser i Trening, så dukker rekordene dine opp her."]));
+    }
+    vekt.forEach(x=>{
+      pr.appendChild(el("div", {class:"pr-row"}, [
+        el("span", {class:"emoji"}, [x.emoji]),
+        el("span", {class:"label"}, [
+          el("span", {class:"name"}, [x.name, x.kg.d >= nylig ? el("span", {class:"pr-ny"}, ["NY"]) : null]),
+          el("span", {class:"note"}, [x.kg.reps + " reps · " + fmtKort(x.kg.d)])
+        ]),
+        el("span", {class:"pr-val"}, [el("b", {}, [fmtKg(x.kg.max) + " kg"]), el("small", {}, ["maks ≈ " + fmtKg(x.e1) + " kg"])])
+      ]));
+    });
+    if(annet.length){
+      pr.appendChild(el("div", {class:"ed-lbl", style:"margin-top:16px"}, ["Kroppsvekt og tid"]));
+      annet.forEach(x=>{
+        pr.appendChild(el("div", {class:"pr-row"}, [
+          el("span", {class:"emoji"}, [x.emoji]),
+          el("span", {class:"label"}, [
+            el("span", {class:"name"}, [x.name, x.best.d >= nylig ? el("span", {class:"pr-ny"}, ["NY"]) : null]),
+            el("span", {class:"note"}, [x.dager.size + (x.dager.size === 1 ? " gang" : " ganger") + " · " + fmtKort(x.best.d)])
+          ]),
+          el("span", {class:"pr-val"}, [el("b", {}, [fmtBest(x.best)]), el("small", {}, [x.best.enhet === "sek" ? "lengst" : "mest"])])
+        ]));
+      });
+    }
+    app.appendChild(pr);
+
+    // Neste løft: øvelsene med vekt i planen
+    const vekter = planWeights();
+    if(vekter.length){
+      const card = el("div", {class:"card"});
+      card.appendChild(el("div", {class:"card-title"}, ["📈 Neste løft"]));
+      card.appendChild(el("div", {class:"sub"}, ["Etter " + PROGRESS_EVERY + " økter på samme vekt kan du øke. Tida er regnet fra hvor ofte du har trent øvelsen den siste måneden."]));
+      const fra = dateKey(addDays(today, -28));
+      vekter.forEach(w=>{
+        const x = L.by[lower(w.name)];
+        const count = countAtKg(w.name, w.kg), neste = nextKg(w.kg);
+        const igjen = Math.max(0, PROGRESS_EVERY - count);
+        const perUke = x ? Array.from(x.dager).filter(d => d > fra).length / 4 : 0;
+        let tekst;
+        if(!igjen) tekst = "Klar nå!";
+        else if(perUke > 0){
+          const uker = igjen / perUke;
+          tekst = igjen + " økter igjen · ca. " + (uker <= 1 ? "en uke" : Math.round(uker) + " uker");
+        }else tekst = igjen + " økter igjen";
+        const hist = x ? x.hist.slice(-20) : [];
+        const kort = el("div", {class:"nx-card"}, [
+          el("div", {class:"nx-top"}, [
+            el("span", {class:"emoji"}, [w.emoji]),
+            el("span", {class:"label"}, [el("span", {class:"name"}, [w.name])]),
+            el("span", {class:"nx-kg", html: fmtKg(w.kg) + ' kg <span>→</span> <em>' + fmtKg(neste) + ' kg</em>'})
+          ])
+        ]);
+        if(hist.length) kort.appendChild(el("div", {html: sparkSvg(hist, neste)}));
+        kort.appendChild(el("div", {class:"nx-bot", style: hist.length ? "" : "margin-top:8px"}, [
+          el("span", {}, [el("b", {}, [Math.min(count, PROGRESS_EVERY) + "/" + PROGRESS_EVERY])]),
+          el("div", {class:"wt-bar"}, [el("i", {style:"width:" + Math.round(Math.min(1, count / PROGRESS_EVERY) * 100) + "%"})]),
+          igjen ? el("span", {}, [tekst])
+                : el("button", {type:"button", class:"lvl-chip", style:"margin:0",
+                    onclick:()=>showLevelUp({name: w.name, emoji: w.emoji, kg: w.kg, count})}, ["⬆️ Øk til " + fmtKg(neste) + " kg"])
+        ]));
+        card.appendChild(kort);
+      });
+      app.appendChild(card);
+    }
+
+    app.appendChild(renderKalkulator());
+  }
+
+  /* ---------- Gutta-kalkulatoren ----------
+     Hver person skriver inn et løft (vekt × reps) og kroppsvekta si. Appen
+     anslår maks (1RM) og rangerer etter tyngste løft eller styrke per kilo.
+     Lagres bare på denne enheten. */
+
+  const KALK_KEY = "treningsplan.kalk.v1";
+  let kalk = null;
+  function lastKalk(){
+    if(kalk) return kalk;
+    try{ kalk = JSON.parse(localStorage.getItem(KALK_KEY)); }catch(e){ kalk = null; }
+    if(!kalk || !Array.isArray(kalk.folk) || !kalk.folk.length){
+      kalk = {modus:"tyngst", folk:[{navn: member && !member.guest ? member.name : "Meg", kg:"", reps:"", kv:""}]};
+    }
+    return kalk;
+  }
+  function lagreKalk(){ try{ localStorage.setItem(KALK_KEY, JSON.stringify(kalk)); }catch(e){} }
+  const tallFra = v => { const n = parseFloat(String(v).replace(",", ".")); return isFinite(n) && n > 0 ? n : 0; };
+
+  function skryt(rel){
+    if(rel >= 2)   return "🦍 Beist";
+    if(rel >= 1.5) return "🔥 Råsterk";
+    if(rel >= 1)   return "💪 Sterk";
+    if(rel >= .6)  return "👍 Solid";
+    return "🌱 På vei";
+  }
+
+  function renderKalkulator(){
+    const K = lastKalk();
+    const card = el("div", {class:"card"});
+    card.appendChild(el("div", {class:"card-title"}, ["🧮 Gutta-kalkulatoren"]));
+    card.appendChild(el("div", {class:"sub"}, ["Hvem er sterkest? Skriv inn et løft og kroppsvekta til hver av dere."]));
+    const folkEl = el("div");
+    const modusEl = el("div", {class:"kalk-modus", role:"group", "aria-label":"Rangering"});
+    const res = el("div", {"aria-live":"polite"});
+
+    function felt(p, nøkkel, label, ph){
+      const inp = el("input", {class:"kalk-in", type:"text", inputmode:"decimal", placeholder: ph, value: p[nøkkel], "aria-label": label + " for " + (p.navn || "person")});
+      inp.addEventListener("input", ()=>{ p[nøkkel] = inp.value; lagreKalk(); tegnRes(); });
+      return el("label", {}, [label, inp]);
+    }
+    function tegnFolk(){
+      folkEl.innerHTML = "";
+      K.folk.forEach((p, i)=>{
+        const navn = el("input", {class:"kalk-in", type:"text", placeholder:"Navn", value: p.navn, "aria-label":"Navn"});
+        navn.addEventListener("input", ()=>{ p.navn = navn.value; lagreKalk(); tegnRes(); });
+        const fjern = K.folk.length > 1 ? el("button", {type:"button", class:"x-btn", "aria-label":"Fjern " + (p.navn || "person"),
+          onclick:()=>{ buzz(8); K.folk.splice(i, 1); lagreKalk(); tegnFolk(); tegnRes(); }}, ["✕"]) : null;
+        folkEl.appendChild(el("div", {class:"kalk-person"}, [
+          el("div", {class:"kalk-top"}, [navn, fjern]),
+          el("div", {class:"kalk-felt"}, [felt(p, "kg", "Løft (kg)", "60"), felt(p, "reps", "Reps", "5"), felt(p, "kv", "Kroppsvekt", "70")])
+        ]));
+      });
+    }
+    function tegnModus(){
+      modusEl.innerHTML = "";
+      [["tyngst", "🏋️ Tyngst løft"], ["kilo", "💪 Sterkest per kilo"]].forEach(([m, t])=>{
+        modusEl.appendChild(el("button", {type:"button", class: K.modus === m ? "on" : "", "aria-pressed":String(K.modus === m),
+          onclick:()=>{ buzz(8); K.modus = m; lagreKalk(); tegnModus(); tegnRes(); }}, [t]));
+      });
+    }
+    function tegnRes(){
+      res.innerHTML = "";
+      const rader = K.folk.map(p=>{
+        const kg = tallFra(p.kg), reps = Math.round(tallFra(p.reps)) || 1, kv = tallFra(p.kv);
+        if(!kg) return null;
+        const e = e1rm(kg, reps);
+        return {navn: (p.navn || "").trim() || "Ukjent", kg, reps, kv, e, rel: kv ? e / kv : 0};
+      }).filter(Boolean);
+      if(!rader.length){
+        res.appendChild(el("div", {class:"ed-hint", style:"text-align:center; margin-top:12px"}, ["Fyll inn løft og reps, så kommer pallen her."]));
+        return;
+      }
+      const etter = K.modus === "kilo" ? (r => r.rel) : (r => r.e);
+      rader.sort((a, b) => etter(b) - etter(a) || b.e - a.e);
+      const pall = el("div", {class:"podium"});
+      rader.forEach((r, i)=>{
+        const med = ["🥇", "🥈", "🥉"][i] || (i + 1) + ".";
+        const linjer = ["Maks ≈ " + fmtKg(r.e) + " kg · " + morsomt(r.e)];
+        if(r.kv) linjer.push(r.rel.toFixed(2).replace(".", ",") + " × kroppsvekt · " + skryt(r.rel));
+        else if(K.modus === "kilo") linjer.push("Mangler kroppsvekt");
+        const stort = K.modus === "kilo"
+          ? [r.kv ? r.rel.toFixed(2).replace(".", ",") + "×" : "–", "per kilo"]
+          : [fmtKg(r.e) + " kg", "maks"];
+        pall.appendChild(el("div", {class:"pod" + (i === 0 && rader.length > 1 ? " p1" : "")}, [
+          el("span", {class:"med"}, [med]),
+          el("span", {class:"navn"}, [el("b", {}, [r.navn + (i === 0 && rader.length > 1 ? " 👑" : "")]), el("small", {}, [linjer.join(" · ")])]),
+          el("span", {class:"tall"}, [el("b", {}, [stort[0]]), el("small", {}, [stort[1]])])
+        ]));
+      });
+      res.appendChild(pall);
+
+      // Treningsvekter for vinneren (eller den eneste).
+      const r = rader[0];
+      res.appendChild(el("div", {class:"ed-lbl", style:"margin-top:16px"}, ["Treningsvekter for " + r.navn]));
+      const tab = el("table", {class:"pst"});
+      [1, 3, 5, 8, 10, 12, 15].forEach(n=>{
+        const kg = n === 1 ? r.e : halv(r.e / (1 + n / 30));
+        tab.appendChild(el("tr", {}, [el("td", {}, [n + (n === 1 ? " rep" : " reps")]), el("td", {}, [Math.round(kg / r.e * 100) + " %"]), el("td", {}, [fmtKg(kg) + " kg"])]));
+      });
+      res.appendChild(tab);
+    }
+
+    tegnFolk();
+    tegnModus();
+    tegnRes();
+    card.appendChild(folkEl);
+    card.appendChild(el("button", {type:"button", class:"add-btn", onclick:()=>{
+      buzz(8);
+      K.folk.push({navn:"", kg:"", reps:"", kv:""});
+      lagreKalk(); tegnFolk(); tegnRes();
+      const inp = folkEl.querySelectorAll(".kalk-top input");
+      if(inp.length) inp[inp.length - 1].focus();
+    }}, ["+ Legg til en kompis"]));
+    card.appendChild(modusEl);
+    card.appendChild(res);
+    card.appendChild(el("div", {class:"ed-hint", style:"margin-top:12px"}, ["Maks er et anslag (Epley): vekt × (1 + reps/30). Test aldri ekte maks uten noen som passer på."]));
+    return card;
+  }
+
   /* ---------- Visning: Spenst ----------
      Korte råd fra forskning på hopptrening (plyometri) for ungdom og
      håndball. Kildene er oversiktsartikler og kontrollerte forsøk, med DOI. */
@@ -3971,6 +4331,7 @@
     if(view === "plan") renderPlan(app);
     else if(view === "log") renderLog(app);
     else if(view === "spenst") renderSpenst(app);
+    else if(view === "pr") renderPR(app);
     else renderTrening(app);
     document.querySelectorAll(".tab").forEach(t=>{
       const on = t.dataset.view === view;

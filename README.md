@@ -59,6 +59,26 @@ vises med ↪. Den bryter verken rekka eller perfekt uke så lenge det som ble
 flyttet blir gjort (eller fortsatt venter på i dag eller senere). Blir det
 aldri gjort, teller dagen som hoppet over.
 
+## PR
+
+Egen fane med rekorder og framgang, regnet ut fra loggen (alt som er huket
+av, eller har sett huket av):
+
+- **Totalt løftet** — sett × reps × kg for alle øvelser med vekt, og hvor
+  mye det er denne uka, sammenlignet med noe like tungt (🐘 elefanter, 🚗
+  biler …)
+- **Personlige rekorder** — tyngste vekt per øvelse med dato og anslått maks
+  (1RM, Epley: vekt × (1 + reps/30)). For øvelser uten vekt vises flest
+  reps eller lengste tid. «NY» betyr satt de siste sju dagene
+- **Neste løft** — for hver øvelse med kg i planen: vektkurve over tid,
+  neste vekt (stiplet linje), framgang mot 10 økter og omtrent hvor mange
+  uker som gjenstår, ut fra hvor ofte øvelsen er trent den siste måneden.
+  Er den klar, kan vekta økes rett herfra
+- **Gutta-kalkulatoren** — hver person skriver inn et løft (kg × reps) og
+  kroppsvekt. Appen anslår maks og lager en pall, sortert etter tyngste løft
+  eller styrke per kilo, med en tabell over treningsvekter for vinneren.
+  Lagres bare i nettleseren (`treningsplan.kalk.v1`)
+
 ## Gjest
 
 «Prøv som gjest» på innloggingen gir en konto som bare lagres i nettleseren
