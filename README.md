@@ -15,9 +15,22 @@ apparatprogrammet fra treningssenteret inne på mandag og torsdag.
 - **Plan** — velg en ukedag, legg til øvelser fra banken (eller en egen),
   juster mengde (trykk på mengden for rullehjul med sett, antall, enhet og
   vekt) og antall runder. Tomme dager er hviledager. Velgeren blir
-  stående åpen, så flere øvelser kan legges til på rad
-- **Logg** — antall økter, rekke, rekord og en månedskalender. Trykk på en
-  dag for å se hva som ble gjort
+  stående åpen, så flere øvelser kan legges til på rad. Trykk på navnet til
+  en øvelse for å endre mengde (og navn på egne øvelser), flytte den opp
+  eller ned, legge den til eller ta den bort på andre dager, eller slette
+  den. «Kopier dagen …» kopierer hele dagen til andre dager. Alt som
+  fjerner noe fra planen (✕, slett, hviledag, kopier over, begynn på nytt)
+  kan angres i noen sekunder etterpå
+- **Begynn på nytt** (nederst i Plan) — velg tom plan eller
+  senterprogrammet. Loggen blir stående, med mindre «Slett loggen også» er
+  krysset av: da slettes alle økter, rekka og vekthistorikken, også i skyen.
+  Planen får et tidsstempel (`resetAt`), så andre enheter og gamle rader i
+  skyen ikke tar loggen tilbake
+- **Logg** — antall økter, rekke og rekord, økter per uke de siste åtte
+  ukene (fullført av planlagt, ⭐ for perfekt uke), de siste øktene,
+  månedskalender, mest trente øvelser og vekter. Trykk på en økt eller en
+  dag i kalenderen for å se hva som ble gjort, og for å slette økta fra
+  loggen (kan angres)
 
 Når alle øvelsene for en dag er huket av, kommer et feiringsark med konfetti
 og rekka di. Er alle ukas økter gjort, blir hele stripa en skimrende stolpe,
@@ -45,6 +58,26 @@ ikke, og dagens økt teller først når den er huket av. En dag som er flyttet,
 vises med ↪. Den bryter verken rekka eller perfekt uke så lenge det som ble
 flyttet blir gjort (eller fortsatt venter på i dag eller senere). Blir det
 aldri gjort, teller dagen som hoppet over.
+
+## PR
+
+Egen fane med rekorder og framgang, regnet ut fra loggen (alt som er huket
+av, eller har sett huket av):
+
+- **Totalt løftet** — sett × reps × kg for alle øvelser med vekt, og hvor
+  mye det er denne uka, sammenlignet med noe like tungt (🐘 elefanter, 🚗
+  biler …)
+- **Personlige rekorder** — tyngste vekt per øvelse med dato og anslått maks
+  (1RM, Epley: vekt × (1 + reps/30)). For øvelser uten vekt vises flest
+  reps eller lengste tid. «NY» betyr satt de siste sju dagene
+- **Neste løft** — for hver øvelse med kg i planen: vektkurve over tid,
+  neste vekt (stiplet linje), framgang mot 10 økter og omtrent hvor mange
+  uker som gjenstår, ut fra hvor ofte øvelsen er trent den siste måneden.
+  Er den klar, kan vekta økes rett herfra
+- **Gutta-kalkulatoren** — hver person skriver inn et løft (kg × reps) og
+  kroppsvekt. Appen anslår maks og lager en pall, sortert etter tyngste løft
+  eller styrke per kilo, med en tabell over treningsvekter for vinneren.
+  Lagres bare i nettleseren (`treningsplan.kalk.v1`)
 
 ## Gjest
 
